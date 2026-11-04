@@ -2,6 +2,13 @@
   "name": "free-dictionary-api-challenger",
   "version": "1.0.0",
   "main": "expo-router/entry",
+  "engines": {
+    "node": ">=24.15.0",
+    "npm": ">=11.12.1",
+    "yarn": "please use npm",
+    "pnpm": "please use npm",
+    "bun": "please use npm"
+  },
   "dependencies": {
     "@expo/ui": "~58.0.27",
     "expo": "~58.0.23",
