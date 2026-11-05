@@ -43,7 +43,7 @@ describe("api", () => {
     }
   });
 
-  it("configura e exporta a instância HTTP", () => {
+  it("should configure and export the HTTP instance", () => {
     const instance = { get: jest.fn() };
     mockCreate.mockReturnValue(instance);
 
@@ -62,25 +62,35 @@ describe("api", () => {
     expect(api).toBe(instance);
   });
 
-  it.each([undefined, ""])("lança erro quando a URL é %p", (value) => {
-    if (value === undefined) {
-      delete process.env.EXPO_PUBLIC_SUPABASE_URL;
-    } else {
-      process.env.EXPO_PUBLIC_SUPABASE_URL = value;
-    }
+  it.each([undefined, ""])(
+    "should throw an error when the URL is %p",
+    (value) => {
+      if (value === undefined) {
+        delete process.env.EXPO_PUBLIC_SUPABASE_URL;
+      } else {
+        process.env.EXPO_PUBLIC_SUPABASE_URL = value;
+      }
 
-    expect(loadModule).toThrow("Configuração do Supabase ausente.");
-    expect(mockCreate).not.toHaveBeenCalled();
-  });
+      expect(loadModule).toThrow(
+        "Configuration missing. Supabase URL and publishable key are required.",
+      );
+      expect(mockCreate).not.toHaveBeenCalled();
+    },
+  );
 
-  it.each([undefined, ""])("lança erro quando a chave é %p", (value) => {
-    if (value === undefined) {
-      delete process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-    } else {
-      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = value;
-    }
+  it.each([undefined, ""])(
+    "should throw an error when the publishable key is %p",
+    (value) => {
+      if (value === undefined) {
+        delete process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+      } else {
+        process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = value;
+      }
 
-    expect(loadModule).toThrow("Configuração do Supabase ausente.");
-    expect(mockCreate).not.toHaveBeenCalled();
-  });
+      expect(loadModule).toThrow(
+        "Configuration missing. Supabase URL and publishable key are required.",
+      );
+      expect(mockCreate).not.toHaveBeenCalled();
+    },
+  );
 });

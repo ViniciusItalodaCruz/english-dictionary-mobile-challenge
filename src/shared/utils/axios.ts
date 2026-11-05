@@ -4,7 +4,9 @@ const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 if (!url || !key) {
-  throw new Error("Configuração do Supabase ausente.");
+  throw new Error(
+    "Configuration missing. Supabase URL and publishable key are required.",
+  );
 }
 
 export const api = axios.create({
