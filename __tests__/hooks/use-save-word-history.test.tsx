@@ -208,6 +208,13 @@ describe("useSaveWordHistory", () => {
 
     mockedSaveWordHistory.mockReturnValueOnce(deferred.promise);
 
+    mockedUseAuthStore.mockImplementation((selector) =>
+      selector({
+        status: "authenticated",
+        session: { user: { id: "user-123" } },
+      } as ReturnType<typeof useAuthStore.getState>),
+    );
+
     const invalidateSpy = jest.spyOn(queryClient, "invalidateQueries");
 
     await renderHook(() => useSaveWordHistory("hello"), {
@@ -232,8 +239,8 @@ describe("useSaveWordHistory", () => {
     });
 
     expect(invalidateSpy).not.toHaveBeenCalled();
+    expect(mockedSaveWordHistory).toHaveBeenCalledTimes(1);
   });
-
   it("does not invalidate history after logout", async () => {
     const deferred = createDeferred<void>();
 

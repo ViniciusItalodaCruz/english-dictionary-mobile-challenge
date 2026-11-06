@@ -1,20 +1,53 @@
-import { FavoriteButton } from "@/modules/details/components";
-import { useSaveWordHistory } from "@/modules/details/hooks";
-import { useLocalSearchParams } from "expo-router";
-import { Text, View } from "react-native";
+import {
+  DetailsContentState,
+  DetailsHeader,
+  WordCard,
+  WordMeanings,
+} from "@/modules/details/components";
+import { useDetailsScreen } from "@/modules/details/hooks";
+import { ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WordScreen() {
-  const { word } = useLocalSearchParams<{ word: string }>();
-
-  useSaveWordHistory(word);
+  const {
+    selectedWord,
+    word,
+    phonetic,
+    meanings,
+    isLoading,
+    isError,
+    isEmpty,
+    isNotFound,
+    showContent,
+    retry,
+    onClose,
+  } = useDetailsScreen();
 
   return (
-    <View className="flex-1 gap-6 bg-zinc-950 p-4">
-      <Text className="text-xl font-semibold text-neutral-50">
-        {word ?? "No word"}
-      </Text>
+    <SafeAreaView className="flex-1 bg-zinc-950">
+      <DetailsHeader word={selectedWord} onClose={onClose} />
 
-      {word ? <FavoriteButton word={word} /> : null}
-    </View>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="gap-6 px-4 pb-8"
+        showsVerticalScrollIndicator={false}
+      >
+        <DetailsContentState
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={isEmpty}
+          isNotFound={isNotFound}
+          onRetry={retry}
+        />
+
+        {showContent ? (
+          <>
+            <WordCard word={word} phonetic={phonetic} />
+
+            <WordMeanings meanings={meanings} />
+          </>
+        ) : null}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
