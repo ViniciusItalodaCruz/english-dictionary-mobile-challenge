@@ -1,12 +1,8 @@
 import { CollectionList } from "@/modules/home/components";
 
-import { useGetWordHistory } from "../hooks";
+import { useDeleteWordHistory, useGetWordHistory } from "../hooks";
 
-interface HistoryListProps {
-  isCurrentTab: boolean;
-}
-
-export function HistoryList({ isCurrentTab }: Readonly<HistoryListProps>) {
+export function HistoryList() {
   const {
     history,
     isLoading,
@@ -15,7 +11,9 @@ export function HistoryList({ isCurrentTab }: Readonly<HistoryListProps>) {
     hasNextPage,
     loadMore,
     retry,
-  } = useGetWordHistory(isCurrentTab);
+  } = useGetWordHistory();
+
+  const { removeWord, isRemovingWord } = useDeleteWordHistory();
 
   return (
     <CollectionList.Root
@@ -28,6 +26,8 @@ export function HistoryList({ isCurrentTab }: Readonly<HistoryListProps>) {
       emptyMessage="No words in your history."
       onLoadMore={loadMore}
       onRetry={retry}
+      onRemove={removeWord}
+      isRemovingWord={isRemovingWord}
     />
   );
 }
