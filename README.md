@@ -1,296 +1,480 @@
-# Mobile Challenge 20240202
+# English Dictionary — Mobile Challenge
 
-## Introdução
+Aplicativo móvel para consultar palavras em inglês, ver fonética e significados, ouvir a pronúncia quando a API fornece áudio e manter favoritos e histórico por usuário autenticado.
 
-Este é um teste para que possamos ver as suas habilidades como Mobile Developer.
+A solução foi desenvolvida como entrega do desafio técnico da Coodesh. O objetivo é demonstrar listagem paginada, detalhe da palavra, cache de requisições e persistência de favoritos e histórico associados ao usuário. Não é um produto comercial nem uma aplicação em produção.
 
-Nesse desafio você deverá desenvolver um aplicativo para listar palavras em inglês, utilizando como base a API [Free Dictionary API](https://dictionaryapi.dev/). O projeto a ser desenvolvido por você tem como objetivo exibir termos em inglês e gerenciar as palavras visualizadas, conforme indicado nos casos de uso que estão logo abaixo.
+> This is a challenge by [Coodesh](https://coodesh.com/).
 
-[SPOILER] As instruções de entrega e apresentação do challenge estão no final deste Readme (=
+## Sumário
 
-### Antes de começar
+- [Apresentação](#apresentação)
+- [Tecnologias utilizadas](#tecnologias-utilizadas)
+- [Decisões arquiteturais](#decisões-arquiteturais)
+- [Estrutura de diretórios](#estrutura-de-diretórios)
+- [Funcionalidades implementadas](#funcionalidades-implementadas)
+- [Integrações externas](#integrações-externas)
+- [Estratégia de cache e performance](#estratégia-de-cache-e-performance)
+- [Segurança e autenticação](#segurança-e-autenticação)
+- [Requisitos do desafio](#requisitos-do-desafio)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação e execução](#instalação-e-execução)
+- [Variáveis de ambiente](#variáveis-de-ambiente)
+- [Configuração do Supabase](#configuração-do-supabase)
+- [Testes e qualidade](#testes-e-qualidade)
+- [Decisões técnicas e trade-offs](#decisões-técnicas-e-trade-offs)
+- [Limitações conhecidas](#limitações-conhecidas)
+- [Créditos](#créditos)
 
-- Considere como deadline da avaliação a partir do início do teste. Caso tenha sido convidado a realizar o teste e não seja possível concluir dentro deste período, avise a pessoa que o convidou para receber instruções sobre o que fazer.
-- Documentar todo o processo de investigação para o desenvolvimento da atividade (README.md no seu repositório); os resultados destas tarefas são tão importantes do que o seu processo de pensamento e decisões à medida que as completa, por isso tente documentar e apresentar os seus hipóteses e decisões na medida do possível.
+## Apresentação
 
-### Instruções iniciais obrigatórias
+O aplicativo abre em uma tela de login. Depois da autenticação, a Home reúne três abas: lista de palavras, histórico e favoritos. A lista é uma grade de três colunas com rolagem infinita. Cada palavra abre uma tela de detalhe com fonética, áudio, significados e os botões Voltar e Próximo.
 
-- Utilize as seguintes tecnologias:
+A Free Dictionary API não oferece a lista de palavras. Essa lista é lida da tabela `words` no Supabase. O detalhe de cada palavra é consultado em `https://api.dictionaryapi.dev`. Favoritos e histórico ficam no PostgreSQL do Supabase e são associados ao `id` do usuário autenticado.
 
-#### Tecnologias (Mobile):
+O `app.json` configura iOS, Android e web, orientação retrato e o scheme `freedictionaryapichallenger`. O nome interno do projeto é `free-dictionary-api-challenger`, versão `1.0.0`. Login, áudio e armazenamento seguro dependem de módulos nativos do Expo. Este documento não registra validação manual em dispositivo, simulador ou navegador.
 
-- Nativo ou Hibrido (Flutter, Ionic, React Native, etc)
-- Estilização (Material, Semantic, etc). Ou escrever o seu próprio sob medida 👌
-- Gestão de dados (Redux, Context API, IndexedDB, SQLite, etc)
+Funcionalidades principais:
 
-Atente-se, ao desenvolver a aplicação mobile, para conceitos de usabilidade e adeque a interface com elementos visuais para os usuários do seu sistema.
+- Login com e-mail e senha, sessão persistida e logout.
+- Lista de palavras em grade, com paginação e rolagem infinita.
+- Detalhe com fonética, classe gramatical, definição e exemplo.
+- Pronúncia quando a API devolve uma URL de áudio.
+- Favoritar e desfavoritar.
+- Histórico das palavras abertas, com listagem e remoção.
+- Estados de carregamento, erro e vazio.
 
-#### Tecnologias (Back-End):
+## Tecnologias utilizadas
 
-- Firebase, Supabase, etc
+As versões abaixo são as instaladas em `node_modules` e registradas no `package-lock.json`. O `package.json` declara intervalo em parte dos pacotes. Onde o intervalo e a versão instalada diferem, a diferença está indicada.
 
-#### Organização:
+| Tecnologia | Versão | Responsabilidade |
+|---|---|---|
+| React | 19.3.0 | Biblioteca de interface |
+| React Native | 0.88.1 | Desenvolvimento mobile |
+| Expo | 58.0.23 | Infraestrutura, módulos nativos e execução |
+| Expo Router | 58.0.30 | Navegação baseada em arquivos |
+| TypeScript | 6.0.3 | Tipagem estática |
+| NativeWind | 4.2.7 | Estilização utilitária sobre Tailwind CSS |
+| Tailwind CSS | 3.4.19 | Preset e processamento das classes |
+| Zustand | 5.0.16 | Estado global da sessão |
+| TanStack Query | 5.106.1 | Estado assíncrono, cache e paginação |
+| Axios | 1.21.0 | Comunicação HTTP |
+| Supabase | serviço externo | Autenticação e PostgreSQL via REST |
+| `@supabase/supabase-js` | 2.119.0 | Pacote instalado; o código da aplicação não o importa |
+| expo-secure-store | 58.0.2 | Persistência da sessão |
+| AsyncStorage | 2.2.0 | Identificador local de instalação |
+| React Hook Form | 7.91.0 | Estado do formulário de login |
+| Zod | 4.6.7 | Validação do formulário |
+| `@hookform/resolvers` | 7.0.3 | Liga o schema Zod ao React Hook Form |
+| Jest | 30.5.2 | Testes automatizados. O `package.json` declara `^30` |
+| jest-expo | 58.0.14 | Preset de teste do Expo |
+| React Native Testing Library | 14.1.0 | Testes de hooks e componentes. O `package.json` declara `^14` |
+| expo-audio | 58.0.11 | Reprodução da pronúncia |
 
-- Aplicação de padrões Clean Code
-- Validação de chamadas assíncronas para evitar travamentos
+O ambiente mínimo declarado em `package.json` e reforçado por `.npmrc` (`engine-strict=true`) é Node.js `>=24.15.0` e npm `>=11.12.1`. O arquivo `.nvmrc` fixa Node.js `24.15.0`. Não há versão de projeto Supabase hospedado neste repositório.
 
-### Modelo de Dados:
+## Decisões arquiteturais
 
-Conforme indicado na documentação da API, a API retorna as informações de uma palavra, tais como etimologia, sinônimos, exemplos de uso, etc. Utilize os campos indicados na documentação dos endpoints para obter os dados necessários.
+A rota compõe a tela. O service conversa com a API. O hook concentra carregamento, erro, cache e ações. O componente permanece declarativo. O alias `@/*` aponta para `src/*`.
 
-### Front-End:
+### Zustand
 
-Nessa etapa você deverá desenvolver uma aplicação móvel nativa ou hibrida para consumir a API do desafio.
+O Zustand guarda apenas o estado de autenticação no cliente: sessão, status e as ações de restaurar, concluir o login, obter um access token válido e encerrar a sessão.
 
-**Obrigatório 1** - Você deverá atender aos seguintes casos de uso:
+O status assume três valores: `loading`, `authenticated` e `unauthenticated`. Não existe um segundo flag `isLoading`. A inicialização começa em `loading`.
 
-- Como usuário, devo ser capaz de visualizar uma lista de palavras com rolagem infinita
-- Como usuário, devo ser capaz de visualizar uma palavra, significados e a fonética
-- Como usuário, devo ser capaz de salvar a palavra como favorito
-- Como usuário, devo ser capaz de remover a palavra como favorito
-- Como usuário, devo ser capaz de visitar uma lista com as palavras que já vi anteriormente
+Esse estado é compartilhado por layouts, services e hooks sem precisar descer por props. A sessão é pequena, síncrona para leitura e independente do cache remoto. O store não acessa o SecureStore diretamente. A leitura e a gravação ficam em `session-storage`.
 
-A API não possui endpoint com a lista de palavras. Essa lista pode ser carregada em memória ou ser salva em banco de dados local ou remoto (por exemplo, com Firebase). Será necessário usar o [arquivo existente dentro do projeto no Github](https://github.com/dwyl/english-words/blob/master/words_dictionary.json).
+### TanStack Query v5
 
-**Obrigatório 2** - Salvar em cache o resultado das requisições, para agilizar a resposta em caso de buscas com parâmetros repetidos.
+O TanStack Query guarda o resultado das requisições. Um único `QUERY_CLIENT` envolve a árvore em `src/app/_layout.tsx`.
 
-**Obrigatório 3** - Seguir o wireframe para a página de listagem dos dados. Pode-se alterar a posição dos itens, mantendo as funcionalidades solicitadas.
+O client padrão usa:
 
-<img src="./img/wireframe.png" width="100%" />
+- `staleTime` de 5 minutos;
+- `retry: false`;
+- `refetchOnWindowFocus: false`.
 
-**Diferencial 1** - Implementar um tocador de audio utilizando, por exemplo, https://responsivevoice.org/api ou recursos nativos;
+O `gcTime` não é customizado.
 
-**Diferencial 2** - Utilizar alguma ferramenta de Injeção de Dependência;
-
-**Diferencial 3** - Escrever Unit Tests ou E2E Test. Escolher a melhor abordagem e biblioteca;
-
-**Diferencial 4** - Implementar login com usuário e senha e associar os favoritos e histórico ao ID do usuário, salvando essa informação em banco de dados local ou remoto
-
-## Readme do Repositório
-
-- Deve conter o título do projeto
-- Uma descrição sobre o projeto em frase
-- Deve conter uma lista com linguagem, framework e/ou tecnologias usadas
-- Como instalar e usar o projeto (instruções)
-- Não esqueça o [.gitignore](https://www.toptal.com/developers/gitignore)
-- Se está usando github pessoal, referencie que é um challenge by coodesh:
-
-> This is a challenge by [Coodesh](https://coodesh.com/)
-
-## Finalização e Instruções para a Apresentação
-
-1. Adicione o link do repositório com a sua solução no teste
-2. Verifique se o Readme está bom e faça o commit final em seu repositório;
-3. Envie e aguarde as instruções para seguir. Caso o teste tenha apresentação de vídeo, dentro da tela de entrega será possível gravar após adicionar o link do repositório. Sucesso e boa sorte. =)
-
-## Solução implementada
-
-This is a challenge by [Coodesh](https://coodesh.com/).
-
-Aplicativo para consultar palavras em inglês, ver significado e fonética, ouvir a pronúncia quando a API oferece áudio, e guardar favoritos e histórico por usuário.
-
-### Stack
-
-- React Native, Expo e Expo Router
-- TypeScript
-- NativeWind
-- Zustand
-- Supabase Auth e PostgreSQL, via REST
-- Axios
-- TanStack Query v5
-- Jest e React Native Testing Library
-- expo-audio
-
-### Funcionalidades
-
-- Login com e-mail e senha, sessão protegida e logout
-- Lista de palavras em grade de três colunas, com paginação e rolagem infinita
-- Detalhe da palavra, com fonética, classes gramaticais, definições e exemplos
-- Voltar e Próximo dentro da ordem da lista de onde a palavra foi aberta
-- Favoritar e desfavoritar, com a estrela acompanhando a palavra atual
-- Histórico gravado ao abrir uma palavra, com listagem e remoção
-- Estados de carregamento, erro e vazio
-- Pronúncia com play, pause, progresso e nova tentativa quando o áudio não carrega
-
-### Organização
-
-- `src/app`: rotas públicas, grupo autenticado e tela `/words/[word]`
-- `src/modules/authentication`: sessão, login, logout e cache privado
-- `src/modules/home`: lista, histórico e favoritos
-- `src/modules/details`: consulta, apresentação, áudio, favorito da palavra e navegação
-- `src/shared`: componentes e utilitários reutilizados
-
-A rota só compõe a tela. Serviços acessam as APIs, hooks concentram estado e apresentação, e componentes permanecem declarativos.
-
-### Lista de palavras
-
-A Free Dictionary API não entrega a lista. O app lê a tabela `words` do Supabase, em ordem `word.asc`, com paginação. O arquivo `words_dictionary.json` não está neste repositório e não há script de carga. A tabela remota precisa existir e estar preenchida antes de usar a Home.
-
-### Free Dictionary API
-
-O detalhe usa `GET https://api.dictionaryapi.dev/api/v2/entries/en/{word}`. O resultado fica no cache do TanStack Query, na chave `["word-details", word]`. Essa chamada não recebe o token do Supabase. Fonética, áudio, definição e exemplo são opcionais na resposta e só aparecem quando existem.
-
-### Navegação entre palavras
-
-Home, History e Favorites abrem `/words/[word]` com o parâmetro `source`: `word-list`, `history` ou `favorites`. O hook `useWordNavigation` lê as páginas já carregadas dessa lista no cache e mantém a ordem original durante a visita. Voltar e Próximo usam `router.setParams`, então o X continua fechando a tela com `router.back()`.
-
-Sem `source`, ou quando a palavra não está nas páginas carregadas, os dois botões ficam desabilitados. A próxima página não é buscada só para habilitar o botão. Abrir outra palavra grava o histórico, atualiza o favorito e recria o player.
-
-### Pronúncia
-
-O player tenta a URL devolvida pela API. Enquanto carrega, mostra o indicador. Se o `expo-audio` reportar erro, ou se passar 10 segundos sem carregar, o indicador vira retry e a mesma URL é pedida de novo. Trocar de palavra interrompe o áudio anterior. Não há outra API nem outro host de áudio. Arquivos externos podem continuar indisponíveis.
-
-### Diferenciais do desafio
-
-- Player de pronúncia com `expo-audio`
-- Testes de unidade com Jest e React Native Testing Library
-- Login com usuário e senha, com favoritos e histórico associados ao ID no Supabase
-
-Não foi adicionada uma ferramenta de injeção de dependência. Os módulos são compostos por import direto.
-
-### Limitações conhecidas
-
-- O access token não é renovado. Quando expira, a sessão local encerra.
-- Voltar e Próximo só conhecem palavras já carregadas na lista de origem.
-- A disponibilidade do áudio depende do servidor indicado pela Free Dictionary API.
-- A lista inicial depende da tabela `words` no Supabase. Este repositório não versiona o `words_dictionary.json`.
-- O pacote `@supabase/supabase-js` está instalado, mas o login não usa o SDK.
-
-## Autenticação
-
-O login usa o Supabase Auth pela API REST (`POST /auth/v1/token?grant_type=password`), com Axios, Zustand e `expo-secure-store`. O SDK `@supabase/supabase-js` não faz parte desse fluxo. A chave usada no app é somente a publishable key. A `service_role` não entra no cliente.
-
-A renovação automática de token ficou de fora de propósito. O diferencial do desafio pede login com usuário e senha e a vinculação de favoritos e histórico ao ID do usuário. Não pede refresh token, rotação nem sessão renovada em background. Quando o access token expira, o app encerra a sessão local e o usuário entra de novo.
-
-### Arquitetura
-
-- `sign-in.service` envia e-mail e senha e devolve o payload do Supabase.
-- `mapAuthResponse` valida esse payload e monta a sessão só com access token, `expiresAt` em segundos e o usuário (`id`, `email`). O `refresh_token` da resposta é ignorado e nunca é gravado.
-- `session-storage` valida, grava, lê e apaga essa sessão no SecureStore. O Zustand não acessa o SecureStore diretamente.
-- `useAuthStore` decide o estado da sessão: `loading`, `authenticated` ou `unauthenticated`.
-- `useSignIn` só navega depois que `completeSignIn` persiste a sessão e o status fica `authenticated`.
-- `getAuthenticatedApi()` em `authenticated-api.ts` é um cliente Axios separado para dados privados. O cliente público das palavras não recebe `Authorization`.
-- O grupo `(app)` continua protegido por status no layout. `Stack.Protected` não existe no Expo Router 58.0.30 instalado, então a proteção segue com `Redirect` e `Stack`.
-
-Não há `isLoading` separado. A tela de espera usa `status === "loading"`.
-
-### Fluxo de login
-
-1. O formulário valida e-mail e senha com React Hook Form e Zod.
-2. `signIn` chama `POST /auth/v1/token?grant_type=password`.
-3. A resposta só vira sessão se tiver access token, usuário e expiração utilizáveis. HTTP 200 sem esse contrato não autentica.
-4. A sessão é gravada no SecureStore.
-5. O Zustand muda para `authenticated`.
-6. A navegação libera o grupo `(app)`.
-
-### Persistência
-
-A sessão fica em um item do SecureStore (`dictionary.auth.session`): access token, expiração e usuário. Senha e refresh token não entram nesse JSON.
-
-Um formato antigo, com chaves separadas para access token, refresh token e metadados, não é restaurado. Na leitura, esse conteúdo é apagado. Um JSON novo que ainda traga refresh token também é descartado.
-
-No iOS, a acessibilidade é `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, então o item não entra no backup para outro aparelho. O Keychain do iOS pode sobreviver à desinstalação. Um identificador de instalação, sem token e sem senha, fica no AsyncStorage. Se o app for reinstalado, esse identificador some e a sessão antiga do Keychain é apagada. No Android, o armazenamento seguro é removido com o app.
-
-Se o SecureStore não estiver disponível, a sessão não é gravada e o usuário não entra.
-
-As escritas passam por uma fila. Cada login ou logout incrementa uma geração. Uma gravação antiga que termina depois confere a geração de novo e não restaura a sessão. Um logout também não apaga uma sessão mais nova, gravada por outro login que já avançou a geração.
-
-Tokens não são escritos em log.
-
-### Expiração
-
-`expiresAt` vem de `expires_at` do Supabase, em segundos. Se a resposta trouxer esse valor em milissegundos, ele é convertido. Se `expires_at` não vier, a expiração é calculada com `expires_in`.
-
-A sessão é considerada expirada quando `Date.now() >= expiresAt * 1000`. Essa checagem acontece:
-
-- ao abrir o app e ler o SecureStore;
-- antes de cada requisição autenticada;
-- quando o app volta para o primeiro plano;
-- quando uma requisição ao Supabase responde HTTP 401;
-- por um timer local, que só antecipa o mesmo logout e não é o único mecanismo, porque o sistema pode suspender timers.
-
-Sessão expirada ou inválida é removida. As rotas privadas fecham e a tela de login volta. Não há renovação automática nem manual.
-
-HTTP 401 de uma API externa, como a Dictionary API, não encerra a sessão do Supabase. O access token também não é enviado para essas APIs.
-
-### Logout
-
-O logout zera a sessão em memória antes de qualquer rede. A geração muda na hora, então uma gravação ou restauração pendente não traz o usuário de volta. Em seguida o app cancela as queries privadas, remove o cache cujo prefixo é `user`, apaga o SecureStore e tenta `POST /auth/v1/logout`.
-
-Falha de rede nessa revogação não desfaz o logout local.
-
-### Rotas
-
-- `loading`: o `AuthGate` mostra carregamento e não monta a rota privada.
-- `unauthenticated`: só a rota pública de login.
-- `authenticated` com token válido: libera o grupo `(app)`.
-- Sessão expirada: bloqueia as rotas privadas e volta para `/sign-in`.
-- Login concluído: permite a Home.
-- Logout: retorna ao Sign In.
-
-A proteção de navegação não substitui as políticas RLS do Supabase.
+Uso concreto:
+
+- `useQuery` busca o detalhe da palavra e o status de favorito.
+- `useInfiniteQuery` pagina a lista geral, o histórico e os favoritos.
+- `isPending`, `isError`, `isFetchingNextPage` e listas vazias alimentam loading, erro e empty state.
+- `useMutation` grava ou remove histórico e favoritos.
+- Depois de uma mutação bem-sucedida, `invalidateQueries` atualiza as consultas do mesmo usuário.
+- A lista geral e o detalhe da palavra usam chaves públicas. Histórico, favoritos e status de favorito usam o prefixo `user` seguido do `userId`.
+- No logout e antes de gravar uma nova sessão, as queries com prefixo `user` são canceladas e removidas. Um listener descarta query privada cujo `userId` não seja o da sessão atual.
+
+Zustand e TanStack Query resolvem problemas diferentes. O primeiro descreve quem está autenticado. O segundo descreve o que foi buscado no servidor e por quanto tempo esse resultado pode ser reutilizado.
 
 ### Axios
 
-O cliente público continua responsável pela lista de palavras e não leva o token do usuário.
+Há dois papéis de cliente, com uma ressalva importante sobre qual deles as telas usam.
 
-O cliente autenticado aponta para o REST do Supabase e envia:
+O cliente compartilhado em `src/shared/utils/axios.ts` aponta para `${EXPO_PUBLIC_SUPABASE_URL}/rest/v1`, tem timeout de 15 segundos e envia `apikey` e `Content-Type`. A importação desse módulo falha se a URL ou a publishable key não existirem. Ele atende:
+
+- `GET /words`, sem `Authorization`;
+- `POST /auth/v1/token?grant_type=password` e `POST /auth/v1/logout`, usando a URL absoluta de autenticação;
+- histórico e favoritos, com `Authorization: Bearer` montado em cada service.
+
+`getAuthenticatedApi()` cria outro cliente Axios para o mesmo REST, exige um access token válido antes do envio, recusa mandar credencial para um host que não seja o Supabase e, em HTTP 401 vindo do Supabase, encerra a sessão. Os services de lista, histórico, favoritos, login e logout não chamam esse cliente. Ele existe e está coberto por teste, mas não é o caminho usado pelas telas.
+
+A Free Dictionary API é chamada com `axios.get` direto, sem `apikey` e sem access token.
+
+### Expo e Expo Router
+
+O Expo fornece o bundler, os módulos nativos e os scripts de execução. O Babel usa `babel-preset-expo` com NativeWind. O Metro aplica `withNativeWind` sobre `src/global.css`. O `app.json` habilita os experimentos `typedRoutes` e `reactCompiler`.
+
+As rotas ficam em `src/app`:
+
+- `sign-in.tsx` é a rota pública;
+- o grupo `(app)` contém a Home e `/words/[word]`;
+- o layout desse grupo só renderiza o `Stack` quando o status é `authenticated` e a sessão não está expirada. Nos outros casos, redireciona para `/sign-in`.
+
+Enquanto o status é `loading`, o `AuthGate` mostra um indicador e não monta as rotas. A proteção implementada usa `Redirect` e o status do Zustand.
+
+### NativeWind
+
+As telas usam classes Tailwind por meio do NativeWind 4. `tailwind.config.js` lê `./src/**/*.{ts,tsx}` e o preset do NativeWind. `cn()` combina `clsx` e `tailwind-merge` para compor classes sem conflito.
+
+Botão, campo, abas e as listas reutilizam esse vocabulário visual. A interface implementada é escura, com superfícies `zinc` e texto claro. O `userInterfaceStyle` do Expo está em `automatic`, e não há troca de tema no código.
+
+### React Hook Form e Zod
+
+O login usa React Hook Form com `zodResolver`. O schema exige e-mail válido e senha com pelo menos um caractere. O botão permanece desabilitado enquanto o formulário é inválido ou o envio está em andamento. A mensagem de erro da API some depois de 8 segundos.
+
+### Supabase
+
+O Supabase é o backend do desafio: Auth para e-mail e senha, e PostgreSQL, acessado pelo PostgREST, para palavras, histórico e favoritos.
+
+O login não usa `@supabase/supabase-js`. O service envia e-mail e senha para `POST /auth/v1/token?grant_type=password`. A resposta só vira sessão quando contém access token, usuário com `id` e `email`, e uma expiração utilizável. O `refresh_token` da resposta é ignorado e não é gravado.
+
+Histórico e favoritos viajam com o access token do usuário. A publishable key identifica o projeto. A `service_role` não entra no cliente.
+
+### Jest e React Native Testing Library
+
+Os testes são unitários e de componente, com Jest, o preset `jest-expo` e React Native Testing Library. Não há suíte E2E, Detox, Maestro ou equivalente.
+
+`jest.setup.ts` fixa variáveis de teste e substitui Axios, SecureStore, AsyncStorage e `expo-audio`. Os arquivos em `__tests__` cobrem services, hooks, componentes, sessão, cache e a tela de detalhe. Essa abordagem verifica contrato, estado e apresentação sem depender de dispositivo nem do Supabase real.
+
+## Estrutura de diretórios
+
+```text
+.
+├── __tests__/
+│   ├── components/
+│   ├── hooks/
+│   ├── screens/
+│   ├── services/
+│   └── utils/
+├── assets/
+├── src/
+│   ├── app/
+│   │   ├── _layout.tsx
+│   │   ├── sign-in.tsx
+│   │   └── (app)/
+│   │       ├── _layout.tsx
+│   │       ├── index.tsx
+│   │       └── words/[word].tsx
+│   ├── modules/
+│   │   ├── authentication/
+│   │   │   ├── components/
+│   │   │   ├── hooks/
+│   │   │   ├── services/
+│   │   │   ├── stores/
+│   │   │   └── util/
+│   │   ├── details/
+│   │   │   ├── components/
+│   │   │   ├── hooks/
+│   │   │   ├── services/
+│   │   │   └── utils/
+│   │   └── home/
+│   │       ├── components/
+│   │       ├── hooks/
+│   │       └── services/
+│   ├── shared/
+│   │   ├── components/
+│   │   └── utils/
+│   └── global.css
+├── app.json
+├── babel.config.js
+├── metro.config.js
+├── jest.config.cjs
+├── jest.setup.ts
+├── tailwind.config.js
+├── tsconfig.json
+├── package.json
+└── package-lock.json
+```
+
+Não há pasta `types` nem `contexts`. Os tipos ficam ao lado dos services que os usam. Em autenticação, a pasta de apoio se chama `util`; em detalhes, `utils`.
+
+Responsabilidades:
+
+- `src/app` declara as rotas e compõe as telas. A Home alterna as três abas em estado local.
+- `src/modules/authentication` trata formulário, sessão, SecureStore, logout e o escopo das queries privadas.
+- `src/modules/home` trata a lista geral, o histórico e os favoritos, inclusive a remoção.
+- `src/modules/details` trata a consulta à Dictionary API, a apresentação, o áudio, o favorito da palavra aberta e a navegação Voltar/Próximo.
+- `src/shared` reúne botão, input, abas, o cliente Axios, o QueryClient, `cn()` e a leitura de inteiros da rota.
+
+Dentro de cada módulo, `components` renderiza, `hooks` orquestra estado e efeitos, `services` acessa HTTP e `stores` existe somente na autenticação.
+
+## Funcionalidades implementadas
+
+### Autenticação
+
+O formulário pede e-mail e senha. A validação ocorre antes do envio. Credencial rejeitada com `error_code` `invalid_credentials` mostra "Invalid email or password.". HTTP 429 mostra pedido para tentar mais tarde. As demais falhas Axios e as falhas locais usam uma mensagem genérica.
+
+A sessão só é considerada concluída depois que o SecureStore confirma a gravação. Se o armazenamento seguro não estiver disponível, ou se a gravação falhar, o status permanece `unauthenticated` e a navegação não segue para a Home.
+
+A sessão guardada contém access token, `expiresAt` em segundos, `id` e `email`. Senha e refresh token não entram nesse JSON. A chave é `dictionary.auth.session`.
+
+Um formato antigo, com chaves separadas de access token, refresh token e metadados, é apagado na leitura. Um JSON que ainda traga refresh token também é descartado.
+
+O grupo `(app)` fica inacessível sem sessão válida. Sessão expirada é removida e a tela de login volta. O botão Sign out encerra a sessão local, limpa o cache privado e tenta revogar o token no Supabase. Falha de rede nessa revogação não restaura o usuário.
+
+Não há tela de cadastro, recuperação de senha nem renovação de token.
+
+### Home
+
+A aba Word list lê `GET /words` em ordem `word.asc`. Cada página pede 100 itens e mais um, para saber se existe próxima página sem uma consulta de contagem. A rolagem usa `FlatList` com três colunas e `onEndReached`.
+
+A primeira carga mostra indicador. Lista vazia mostra "No words found.". Falha na primeira página ou na página seguinte oferece nova tentativa. A query só fica habilitada enquanto a aba está selecionada. Os parâmetros opcionais de rota `page` e `pageSize` alteram a página inicial e o tamanho, com teto de 100. A interface não expõe controle para esses parâmetros.
+
+Tocar em uma palavra abre `/words/[word]` com `source=word-list`.
+
+### Detalhes
+
+A tela consulta a Free Dictionary API pela palavra normalizada em minúsculas. A resposta é cacheada em `["word-details", palavra]`.
+
+Quando o conteúdo existe, a tela mostra:
+
+- a palavra;
+- a fonética de `phonetic` ou, na ausência dela, o primeiro `phonetics[].text`;
+- o player, se houver URL de áudio;
+- os significados agrupados por `partOfSpeech`, com definição e exemplo quando o exemplo existe.
+
+HTTP 404 da API aparece como "Word not found." e oferece retry. Resposta vazia aparece como ausência de definições. Sinônimos, antônimos e origem podem vir na resposta e estão tipados no service. A tela não os renderiza.
+
+O X chama `router.back()`. Voltar e Próximo chamam `router.setParams` com a palavra vizinha e o mesmo `source`. Por isso o X continua fechando a tela, em vez de desfazer cada palavra visitada.
+
+A vizinhança vem das páginas já presentes no cache da lista de origem: `word-list`, `history` ou `favorites`. Sem `source`, ou quando a palavra não está nessas páginas, os dois botões ficam desabilitados. A próxima página não é buscada apenas para habilitar o botão. Trocar de palavra grava o histórico, atualiza o favorito e recria o player.
+
+### Histórico
+
+Abrir uma palavra, inclusive por Voltar ou Próximo, envia um upsert para `word_history`. O corpo leva `user_id`, `word` e `last_viewed_at`. O header `Prefer: resolution=merge-duplicates` e o parâmetro `on_conflict=user_id,word` atualizam a visualização anterior da mesma palavra.
+
+A aba History lista `user_id`, `word` e `last_viewed_at`, da visualização mais recente para a mais antiga, em páginas de 20 itens. A lista também rola de forma infinita. Cada item abre o detalhe com `source=history` e pode ser removido. A remoção filtra `user_id` e `word`.
+
+A consulta da lista não envia filtro de `user_id`. A separação entre usuários depende de RLS no Supabase.
+
+### Favoritos
+
+Na tela de detalhe, a estrela consulta se a palavra já está em `favorites` para o usuário atual. Adicionar envia `POST /favorites` com o corpo `{ word }`, `Prefer: resolution=ignore-duplicates` e `on_conflict=user_id,word`. O cliente não envia `user_id` nesse insert. Remover envia `DELETE /favorites` filtrando `user_id` e `word`.
+
+A aba Favorites lista `user_id`, `word` e `created_at`, do mais recente para o mais antigo, em páginas de 20. Também oferece rolagem infinita, abertura do detalhe com `source=favorites` e remoção.
+
+Depois de adicionar ou remover, as queries de favoritos daquele `userId` são invalidadas. A lista e a estrela passam a refletir o servidor. Não há atualização otimista do cache.
+
+Como na listagem de histórico, a listagem de favoritos não filtra `user_id` na query. A consulta de status e a exclusão filtram.
+
+## Integrações externas
+
+### Free Dictionary API
+
+O detalhe usa:
 
 ```http
-Authorization: Bearer ACCESS_TOKEN
-apikey: SUPABASE_PUBLISHABLE_KEY
+GET https://api.dictionaryapi.dev/api/v2/entries/en/{word}
 ```
 
-Antes do envio, ele pede `getValidAccessToken()`. Token ausente ou expirado não é enviado. Não há interceptor de refresh e a requisição não é repetida para tentar renovar o token. Um HTTP 401 do próprio Supabase encerra a sessão.
+A palavra é codificada com `encodeURIComponent`. A chamada não recebe token do Supabase.
 
-Favoritos e histórico já usam essa sessão. As consultas privadas ficam em `authenticatedQueryKey(userId, ...)`, com prefixo `user`. Os serviços enviam `Authorization: Bearer` no cliente Supabase compartilhado. `getAuthenticatedApi()` continua disponível, mas não é o cliente chamado por esses fluxos.
+Campos usados pela interface:
 
-### Cache
+| Campo | Uso |
+|---|---|
+| `word` | Título. Se ausente na entrada, a tela usa a palavra da rota |
+| `phonetic` e `phonetics[].text` | Fonética |
+| `phonetics[].audio` | Primeira URL não vazia alimenta o player |
+| `meanings[].partOfSpeech` | Classe gramatical |
+| `meanings[].definitions[].definition` | Definição |
+| `meanings[].definitions[].example` | Exemplo, apenas quando presente |
 
-O `QUERY_CLIENT` é único. No logout e na troca de usuário, as queries privadas em andamento são canceladas e as chaves que começam com `user` são removidas. Uma query privada de outro usuário que tente repovoar o cache depois disso é descartada.
+Fonética, áudio e exemplo são opcionais. O resultado fica no cache do TanStack Query pela palavra normalizada e segue o `staleTime` de 5 minutos do client.
 
-As consultas públicas de palavras permanecem. O cancelamento e a remoção ficam restritos ao prefixo `user`.
+### Supabase
 
-### Variáveis de ambiente
+O cliente usa duas variáveis públicas e a API REST. Não há SDK no fluxo.
 
-Copie `.env.example` para `.env`:
+Autenticação:
 
-```bash
-EXPO_PUBLIC_SUPABASE_URL=https://PROJECT.supabase.co
-EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```http
+POST {EXPO_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password
+POST {EXPO_PUBLIC_SUPABASE_URL}/auth/v1/logout
 ```
 
-As duas variáveis são obrigatórias. Não coloque a secret key no app.
+Dados, na base `{EXPO_PUBLIC_SUPABASE_URL}/rest/v1`:
 
-### Erros
+| Tabela | Operações do app | Campos observados |
+|---|---|---|
+| `words` | `GET`, somente com `apikey` | `word` |
+| `word_history` | `GET`, `POST`, `DELETE` com Bearer | `user_id`, `word`, `last_viewed_at` |
+| `favorites` | `GET`, `POST`, `DELETE` com Bearer | `user_id`, `word`, `created_at` |
 
-- Credencial inválida: mensagem genérica de e-mail ou senha.
-- HTTP 429: pede para tentar mais tarde.
-- Falha ao gravar a sessão: o login não navega e o status não fica `authenticated`.
-- Access token expirado ou rejeitado pelo Supabase: logout local e retorno ao login.
-- Falha ao apagar o SecureStore no logout: o app tenta de novo e mantém a sessão zerada em memória.
+O `POST` de favorito envia somente `word`. Para a listagem conseguir ler `user_id` e `created_at`, o banco precisa preencher esses campos na inserção autenticada.
 
-### Limitações
+As listagens privadas não filtram usuário. RLS é necessário para que cada access token veja apenas as próprias linhas. A proteção de rota no aplicativo não substitui essa política. A tabela `words` precisa ser legível com a publishable key, porque a lista não envia Bearer.
 
-- Não existe renovação de access token. O tempo de sessão é o `expires_in` devolvido pelo Supabase, em geral uma hora. Depois disso o usuário precisa entrar outra vez.
-- O app não mantém o usuário logado além dessa expiração, mesmo que a rede volte.
-- Um timer pode ser suspenso com o app em segundo plano. Por isso a expiração também é conferida na abertura, no retorno ao primeiro plano e antes de cada chamada privada.
-- O valor do SecureStore no iOS fica em torno de 2048 bytes. A sessão simplificada cabe nesse limite para um JWT comum. Se a gravação falhar, o login não é concluído.
-- A proteção de rotas no cliente não substitui RLS no Supabase.
-- Voltar e Próximo não atravessam uma página que ainda não foi carregada.
-- O áudio pode falhar mesmo com uma URL válida, porque o arquivo é servido fora deste projeto.
+O repositório não contém migrations, policies nem script SQL.
 
-### Como executar
+### Origem da lista de palavras
 
-Node `>=24.15.0` e npm `>=11.12.1`.
+O desafio pede o conjunto `words_dictionary.json` do repositório [dwyl/english-words](https://github.com/dwyl/english-words/blob/master/words_dictionary.json). Esse arquivo não está neste projeto e não existe script de importação ou seed.
+
+A Home lê a tabela `words` já existente no Supabase, em ordem alfabética. O banco não é populado automaticamente. Sem linhas nessa tabela, a lista fica vazia.
+
+## Estratégia de cache e performance
+
+O TanStack Query evita repetir uma busca enquanto o resultado ainda está fresco. O detalhe de uma palavra já visitada é reutilizado pela chave `["word-details", palavra]`, inclusive quando a mesma palavra é aberta a partir de outra aba.
+
+A paginação infinita está em três consultas:
+
+| Consulta | Chave | Página |
+|---|---|---|
+| Lista geral | `["word-list", { initialPage, pageSize }]` | 100, teto 100 |
+| Histórico | `["user", userId, "word-history"]` | 20 |
+| Favoritos | `["user", userId, "word-favorites"]` | 20 |
+
+O status de uma palavra usa `["user", userId, "word-favorites", word]`. Invalidar o prefixo `word-favorites` daquele usuário atualiza a lista e a estrela.
+
+As mutações não tentam de novo. Uma mutação só invalida o cache se a sessão ainda pertence ao mesmo usuário que iniciou a operação. No logout, as queries privadas em andamento são canceladas e as chaves que começam com `user` são removidas. A lista geral e os detalhes da Dictionary API permanecem, porque não carregam dado do usuário.
+
+As listas usam `FlatList`. A grade configura `initialNumToRender` 24, `maxToRenderPerBatch` 24, `windowSize` 7 e `onEndReachedThreshold` 0.4. Histórico e favoritos usam 12, 12, 5 e 0.5. A próxima página só é pedida quando já existem itens, há próxima página e não há carga ou erro em andamento. Histórico e favoritos só disparam a query com a aba ativa.
+
+Não há métrica de desempenho medida neste repositório.
+
+## Segurança e autenticação
+
+O login usa Supabase Auth pela REST e a publishable key. O access token resultante é a credencial das chamadas privadas.
+
+A persistência usa o SecureStore com `WHEN_UNLOCKED_THIS_DEVICE_ONLY`. No iOS, essa opção define a acessibilidade do Keychain. As escritas passam por uma fila e por uma geração. Cada login ou logout incrementa a geração. Uma gravação antiga que termina depois não restaura a sessão, e um logout não apaga uma sessão mais nova.
+
+Um identificador de instalação, sem token e sem senha, fica no AsyncStorage (`dictionary.auth.install-id`) e também dentro do JSON seguro. Se os dois não coincidirem, a sessão armazenada é apagada. Isso cobre o caso em que o armazenamento seguro sobrevive a uma reinstalação e o AsyncStorage não.
+
+A sessão é tratada como expirada quando `Date.now() >= expiresAt * 1000`. `expiresAt` vem de `expires_at`. Valor em milissegundos é convertido para segundos. Se `expires_at` não vier, a expiração é calculada com `expires_in`. Essa verificação ocorre:
+
+- ao abrir o app e ler o SecureStore;
+- antes de cada chamada que precisa do access token;
+- quando o app volta para o primeiro plano;
+- por um timer local até o horário de expiração.
+
+O timer apenas antecipa o mesmo encerramento. Ele não é o único mecanismo, porque o sistema pode suspender timers em segundo plano.
+
+O cliente `getAuthenticatedApi()` encerra a sessão em HTTP 401 do próprio Supabase e não envia o token para outro host. As telas atuais não passam por esse cliente. Nelas, o token é conferido antes do envio. Um HTTP 401 devolvido pelo cliente compartilhado não passa pelo interceptor e, sozinho, não encerra a sessão. HTTP 401 da Dictionary API também não encerra a sessão do Supabase.
+
+O refresh token foi deixado de fora de propósito. O diferencial do desafio pede login e a associação de favoritos e histórico ao usuário. Não pede renovação automática. Quando o access token expira, a sessão local termina e o usuário entra novamente. Essa é uma decisão deste challenge, não um modelo de sessão para aplicação em produção.
+
+O logout zera a sessão em memória antes da rede, limpa o cache privado, apaga o SecureStore e então tenta `POST /auth/v1/logout` com timeout de 5 segundos.
+
+As variáveis `EXPO_PUBLIC_*` são incorporadas ao bundle do cliente. A `service_role` e qualquer segredo de servidor não podem ser colocados nelas.
+
+## Requisitos do desafio
+
+### Obrigatórios
+
+| Requisito | Status | Implementação |
+|---|---|---|
+| Lista de palavras com rolagem infinita | Atendido | Grade de três colunas, `useInfiniteQuery` e `GET /words` |
+| Detalhes, significados e fonética | Atendido | Free Dictionary API, com classe gramatical, definição, exemplo e fonética quando existirem |
+| Adicionar aos favoritos | Atendido | `POST /favorites` a partir da estrela |
+| Remover dos favoritos | Atendido | `DELETE /favorites` na estrela e na lista |
+| Histórico de palavras visualizadas | Atendido | Upsert ao abrir a palavra, lista paginada e remoção |
+| Cache de requisições | Atendido | TanStack Query, com reutilização por chave e `staleTime` de 5 minutos |
+| Interface baseada no wireframe | Atendido | Abas Word list, History e Favorites, grade de três colunas e detalhe com fechar, palavra, fonética, áudio, significados, Voltar e Próximo. O desafio permite reposicionar itens |
+
+### Diferenciais
+
+| Requisito | Status | Implementação |
+|---|---|---|
+| Reprodução de áudio | Atendido | `expo-audio` com a URL devolvida pela Dictionary API |
+| Injeção de dependência | Não implementado | Não há container, decorators nem biblioteca de DI. Os módulos se compõem por import direto |
+| Testes unitários ou E2E | Atendido | Jest e React Native Testing Library. Não há E2E |
+| Autenticação com persistência por usuário | Atendido | Login com e-mail e senha, sessão no SecureStore, histórico e favoritos associados ao usuário no Supabase |
+
+## Pré-requisitos
+
+- Node.js `>=24.15.0`. O `.nvmrc` pede `24.15.0`.
+- npm `>=11.12.1`. O `.npmrc` ativa `engine-strict`.
+- Os campos `engines.yarn`, `engines.pnpm` e `engines.bun` pedem o uso de npm.
+- Um projeto Supabase com Auth e as tabelas descritas mais abaixo.
+- Para Android ou iOS, um runtime Expo compatível com o SDK 58. O repositório não fixa versão de Android SDK nem de Xcode, e não versiona as pastas `ios/` e `android/`.
+- Para abrir emulador ou simulador local, o toolchain nativo correspondente precisa estar instalado.
+
+O projeto não inclui `expo-dev-client` nem módulo nativo fora do SDK. Os plugins registrados são `expo-router`, `expo-splash-screen`, `expo-secure-store` e `expo-audio`. A execução depende de um runtime desse SDK. Este README não afirma compatibilidade validada com uma build específica do Expo Go.
+
+No web, o `app.json` usa Metro com `output: server` e existe o script `npm run web`. Se `SecureStore.isAvailableAsync()` for falso, o login não grava a sessão e não entra na Home. Esta documentação não trata o web como plataforma validada.
+
+## Instalação e execução
 
 ```bash
-npm install
-cp .env.example .env
+git clone https://github.com/ViniciusItalodaCruz/free-dictionary-api-challenger.git
+cd free-dictionary-api-challenger
+npm ci
+```
+
+`npm ci` é o caminho de instalação porque o `package-lock.json` existe. Em seguida, crie o `.env` como descrito na próxima seção e prepare o Supabase antes de abrir a Home.
+
+```bash
 npm start
 ```
 
-`npm run android`, `npm run ios` e `npm run web` abrem o mesmo projeto nas plataformas correspondentes.
+`npm start` executa `expo start` e sobe o Metro. Esse comando ainda não instala o aplicativo em um dispositivo.
+
+```bash
+npm run android
+npm run ios
+npm run web
+```
+
+Esses scripts executam `expo start --android`, `expo start --ios` e `expo start --web`. Eles pedem a abertura do projeto na plataforma correspondente, desde que o runtime e o toolchain existam.
+
+`npm run reset-project` pertence ao template do Expo. Ele move o `src` atual para fora do app. Não faz parte da execução do dicionário.
+
+## Variáveis de ambiente
+
+O código lê duas variáveis:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
+
+Não há `.env.example` no repositório. Crie um arquivo `.env` na raiz com a URL do projeto, no formato `https://PROJECT.supabase.co`, e a publishable key desse projeto.
+
+As duas são obrigatórias. O cliente Axios interrompe a inicialização quando uma delas falta. Valores `EXPO_PUBLIC_*` entram no bundle do cliente. Use somente a publishable key. Não coloque a secret key nem a `service_role`.
+
+O `.gitignore` ignora `.env*.local` e não ignora `.env`. O arquivo `.env` também está versionado no estado atual do repositório. Não acrescente segredo a esse arquivo. Se a cópia versionada contiver uma key real, ela deve ser revogada no painel do Supabase e substituída por outra.
+
+Os testes definem valores fictícios em `jest.setup.ts` quando as variáveis não existem. Esses valores não autenticam em um projeto real.
+
+## Configuração do Supabase
+
+O repositório não cria o banco. Antes de usar o aplicativo, o projeto Supabase precisa ser preparado manualmente.
+
+1. Crie um projeto e copie a URL e a publishable key para o `.env`.
+2. Crie um usuário de e-mail e senha no Auth. O app não possui cadastro.
+3. Crie e popule a tabela `words` com a coluna `word`. A lista pede `select=word&order=word.asc` e precisa ser legível com a publishable key. A origem esperada dos termos é `words_dictionary.json`, importado fora deste repositório.
+4. Crie `word_history` com `user_id`, `word` e `last_viewed_at`. O upsert do app envia `on_conflict=user_id,word` e depende de uma restrição única correspondente para o PostgREST aplicar o merge.
+5. Crie `favorites` com `user_id`, `word` e `created_at`. O insert envia apenas `word`; o banco precisa gravar o usuário autenticado e a data. O conflito informado também é `user_id,word`.
+6. Ative RLS em `word_history` e `favorites` para restringir leitura e escrita ao `id` do access token. As listagens não enviam filtro de usuário.
+
+Não há SQL versionado para reproduzir essas tabelas, políticas ou a carga das palavras. Sem esse preparo, login, lista, histórico ou favoritos falham conforme a permissão ausente.
+
+## Testes e qualidade
 
 ```bash
 npm test
@@ -299,12 +483,61 @@ npm run test:ci
 npm run typecheck
 ```
 
-`npm run lint` chama `expo lint`. O repositório não inclui configuração nem dependência do ESLint; o comando do Expo tenta instalá-las na primeira execução.
+- `npm test` executa Jest.
+- `npm run test:coverage` gera cobertura em `coverage/`.
+- `npm run test:ci` executa Jest em CI, com cobertura e `--runInBand`.
+- `npm run typecheck` executa `tsc --noEmit`. O `tsconfig.json` estende `expo/tsconfig.base` e liga `strict`.
 
-Os testes usam Jest e `@testing-library/react-native`.
+O Jest usa `clearMocks`, procura `*.test` e `*.spec`, e coleta cobertura de `src/**/*.{ts,tsx}`. O setup simula as fronteiras nativas e o Axios.
 
-O Supabase precisa das tabelas `words`, `word_history` e `favorites`, com RLS alinhado ao usuário autenticado. O app seleciona `word` na lista, `user_id, word, last_viewed_at` no histórico e `user_id, word, created_at` nos favoritos.
+A suíte cobre, entre outros pontos:
 
-## Suporte
+- login, mapeamento da sessão, SecureStore, ciclo de vida e logout;
+- o cliente autenticado, inclusive recusa de credencial para host externo e HTTP 401;
+- services de lista, histórico, favoritos e Dictionary API;
+- hooks de paginação, mutação, detalhe, áudio, favorito e navegação;
+- componentes das listas, do detalhe e da tela `/words/[word]`.
 
-Para tirar dúvidas sobre o processo envie uma mensagem diretamente a um especialista no chat da plataforma.
+Não há teste de ponta a ponta.
+
+`npm run lint` chama `expo lint`. O repositório não inclui configuração nem dependência do ESLint. O comando do Expo pode tentar instalá-las na primeira execução. Não há script de formatação. `prettier-plugin-tailwindcss` está nas devDependencies, sem configuração de Prettier no projeto.
+
+## Decisões técnicas e trade-offs
+
+A sessão do cliente ficou no Zustand porque é um estado pequeno, compartilhado e independente da resposta de cada endpoint. O resultado remoto ficou no TanStack Query para obter cache, paginação, cancelamento e invalidação sem copiar essa lógica para cada tela.
+
+O Supabase concentra autenticação e persistência. O acesso foi feito pela REST com Axios para manter o contrato visível nos services e para controlar exatamente o que é persistido. O SDK instalado não participa desse fluxo. O refresh token retornado pelo Auth é descartado: o escopo pedido é identificar o usuário e amarrar histórico e favoritos a ele durante a validade do access token.
+
+Services e hooks estão separados para que a chamada HTTP possa ser testada sem montar a tela, e para que a tela não conheça URL, header ou parâmetro do PostgREST.
+
+O cache privado leva o `userId` na chave e é removido no logout. O cache da Dictionary API e da lista geral é reaproveitado porque não contém dado pessoal.
+
+TypeScript com `strict` fixa o formato da sessão, das páginas e da resposta da Dictionary API. Campos opcionais da API só chegam à interface quando existem.
+
+A navegação entre palavras usa as páginas já carregadas. Buscar a próxima página somente para habilitar Próximo aumentaria tráfego e mudaria a lista sem uma ação explícita de rolagem. A limitação foi mantida.
+
+A lista depende de dados preparados no Supabase. Embarcar `words_dictionary.json` no aplicativo aumentaria o bundle e afastaria a lista do mesmo banco que guarda histórico e favoritos. A importação ficou fora do repositório, e por isso o ambiente não sobe completo apenas com `npm ci`.
+
+## Limitações conhecidas
+
+- Não há renovação de access token. A duração da sessão é a devolvida pelo Supabase. Depois dela, o usuário precisa entrar de novo, mesmo que a rede volte.
+- O interceptor de HTTP 401 está em `getAuthenticatedApi()`, que não é o cliente usado pelas telas. Uma resposta 401 do cliente compartilhado não encerra a sessão por si só.
+- A proteção de rotas no cliente não substitui RLS.
+- Se o SecureStore recusar a gravação, o login não é concluído e a sessão não fica autenticada.
+- Voltar e Próximo só conhecem palavras já carregadas na lista de origem.
+- O áudio depende da URL e do servidor indicados pela Free Dictionary API. Não há outro provedor. Se o arquivo não carregar, ou se passarem 10 segundos sem carregar, o player oferece nova tentativa da mesma URL.
+- A Home depende da tabela `words` previamente carregada. Não há seed.
+- Não há migrations nem policies versionadas.
+- Não há injeção de dependência.
+- Não há testes E2E.
+- Sinônimos, antônimos e origem não são exibidos.
+- O `.gitignore` não impede o commit de `.env`, e esse arquivo está versionado hoje.
+- `img/wireframe.png` está ausente na árvore de trabalho atual. A interface foi conferida contra a imagem ainda registrada no Git.
+
+## Créditos
+
+> This is a challenge by [Coodesh](https://coodesh.com/).
+
+- [Coodesh](https://coodesh.com/)
+- [Free Dictionary API](https://dictionaryapi.dev/)
+- [dwyl/english-words](https://github.com/dwyl/english-words/blob/master/words_dictionary.json), origem prevista para a lista de palavras
