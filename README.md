@@ -19,11 +19,13 @@ A solução foi desenvolvida como entrega do desafio técnico da Coodesh. O obje
 - [Requisitos do desafio](#requisitos-do-desafio)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação e execução](#instalação-e-execução)
+- [Contas de teste](#contas-de-teste)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Configuração do Supabase](#configuração-do-supabase)
 - [Testes e qualidade](#testes-e-qualidade)
 - [Decisões técnicas e trade-offs](#decisões-técnicas-e-trade-offs)
 - [Limitações conhecidas](#limitações-conhecidas)
+- [Referências](#referências)
 - [Créditos](#créditos)
 
 ## Apresentação
@@ -422,10 +424,8 @@ No web, o `app.json` usa Metro com `output: server` e existe o script `npm run w
 ## Instalação e execução
 
 ```bash
-git clone https://github.com/ViniciusItalodaCruz/english-dictionary-mobile-challenge
-.git
+git clone https://github.com/ViniciusItalodaCruz/english-dictionary-mobile-challenge.git
 cd english-dictionary-mobile-challenge
-
 npm ci
 ```
 
@@ -446,6 +446,17 @@ npm run web
 Esses scripts executam `expo start --android`, `expo start --ios` e `expo start --web`. Eles pedem a abertura do projeto na plataforma correspondente, desde que o runtime e o toolchain existam.
 
 `npm run reset-project` pertence ao template do Expo. Ele move o `src` atual para fora do app. Não faz parte da execução do dicionário.
+
+## Contas de teste
+
+O aplicativo não possui cadastro. Estas duas contas já existem no Auth do Supabase usado pelo projeto e servem para o login manual. Histórico e favoritos ficam separados pelo `id` de cada usuário.
+
+| E-mail | Senha |
+|---|---|
+| reader.one@example.com | ReaderOne!2026#Test |
+| reader.two@example.com | ReaderTwo!2026#Test |
+
+As senhas valem para o projeto configurado no `.env` desta entrega. Um Supabase novo não recebe esses usuários automaticamente.
 
 ## Variáveis de ambiente
 
@@ -469,7 +480,7 @@ Os testes definem valores fictícios em `jest.setup.ts` quando as variáveis nã
 O repositório não cria o banco. Antes de usar o aplicativo, o projeto Supabase precisa ser preparado manualmente.
 
 1. Crie um projeto e copie a URL e a publishable key para o `.env`.
-2. Crie um usuário de e-mail e senha no Auth. O app não possui cadastro.
+2. Use uma das contas de teste já existentes ou crie um usuário de e-mail e senha no Auth. O app não possui cadastro.
 3. Crie e popule a tabela `words` com a coluna `word`. A lista pede `select=word&order=word.asc` e precisa ser legível com a publishable key. A origem esperada dos termos é `words_dictionary.json`, importado fora deste repositório.
 4. Crie `word_history` com `user_id`, `word` e `last_viewed_at`. O upsert do app envia `on_conflict=user_id,word` e depende de uma restrição única correspondente para o PostgREST aplicar o merge.
 5. Crie `favorites` com `user_id`, `word` e `created_at`. O insert envia apenas `word`; o banco precisa gravar o usuário autenticado e a data. O conflito informado também é `user_id,word`.
@@ -536,6 +547,15 @@ A lista depende de dados preparados no Supabase. Embarcar `words_dictionary.json
 - Sinônimos, antônimos e origem não são exibidos.
 - O `.gitignore` não impede o commit de `.env`, e esse arquivo está versionado hoje.
 - `img/wireframe.png` está ausente na árvore de trabalho atual. A interface foi conferida contra a imagem ainda registrada no Git.
+
+## Referências
+
+Documentação consultada durante o desenvolvimento:
+
+- [NativeWind — Installation](https://www.nativewind.dev/docs/getting-started/installation), para a estilização com Tailwind no React Native.
+- [Expo Router — Authentication in Expo Router](https://docs.expo.dev/router/advanced/authentication-rewrites/), para a separação entre rota pública e grupo autenticado.
+- [TanStack Query — Overview](https://tanstack.com/query/latest/docs/framework/react/overview), para cache, queries e paginação.
+- [Zustand — Introduction](https://zustand.docs.pmnd.rs/learn/getting-started/introduction), para o estado global da sessão.
 
 ## Créditos
 
