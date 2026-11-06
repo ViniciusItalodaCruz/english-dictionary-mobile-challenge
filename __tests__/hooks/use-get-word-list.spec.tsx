@@ -384,4 +384,103 @@ describe("useGetWordList", () => {
       signal: expect.any(AbortSignal),
     });
   });
+
+  it("fetches words when isCurrentTab is true", async () => {
+    mockedGetWordList.mockResolvedValueOnce(createPage());
+
+    const { result } = await renderHook(() => useGetWordList(true), {
+      wrapper,
+    });
+
+    await waitFor(() => {
+      expect(result.current.words).toEqual(["hello"]);
+    });
+
+    expect(mockedGetWordList).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not fetch words when isCurrentTab is false", async () => {
+    const { result } = await renderHook(() => useGetWordList(false), {
+      wrapper,
+    });
+
+    expect(mockedGetWordList).not.toHaveBeenCalled();
+    expect(result.current.words).toEqual([]);
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.isEmpty).toBe(false);
+  });
+
+  it("fetches words when the tab becomes active", async () => {
+    mockedGetWordList.mockResolvedValueOnce(createPage());
+
+    const { result, rerender } = await renderHook(
+      ({ isCurrentTab }: { isCurrentTab: boolean }) =>
+        useGetWordList(isCurrentTab),
+      {
+        initialProps: { isCurrentTab: false },
+        wrapper,
+      },
+    );
+
+    expect(mockedGetWordList).not.toHaveBeenCalled();
+
+    await rerender({ isCurrentTab: true });
+
+    await waitFor(() => {
+      expect(result.current.words).toEqual(["hello"]);
+    });
+
+    expect(mockedGetWordList).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not refetch when the tab becomes inactive", async () => {
+    mockedGetWordList.mockResolvedValueOnce(createPage());
+
+    const { result, rerender } = await renderHook(
+      ({ isCurrentTab }: { isCurrentTab: boolean }) =>
+        useGetWordList(isCurrentTab),
+      {
+        initialProps: { isCurrentTab: true },
+        wrapper,
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.words).toEqual(["hello"]);
+    });
+
+    await rerender({ isCurrentTab: false });
+
+    expect(mockedGetWordList).toHaveBeenCalledTimes(1);
+    expect(result.current.words).toEqual(["hello"]);
+  });
+
+  it("preserves cached words when the tab becomes active again", async () => {
+    mockedGetWordList.mockResolvedValue(createPage());
+
+    const { result, rerender } = await renderHook(
+      ({ isCurrentTab }: { isCurrentTab: boolean }) =>
+        useGetWordList(isCurrentTab),
+      {
+        initialProps: { isCurrentTab: true },
+        wrapper,
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.words).toEqual(["hello"]);
+    });
+
+    await rerender({ isCurrentTab: false });
+
+    expect(result.current.words).toEqual(["hello"]);
+
+    await rerender({ isCurrentTab: true });
+
+    expect(result.current.words).toEqual(["hello"]);
+
+    await waitFor(() => {
+      expect(mockedGetWordList).toHaveBeenCalledTimes(2);
+    });
+  });
 });

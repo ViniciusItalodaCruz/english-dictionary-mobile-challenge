@@ -6,9 +6,9 @@ import { EmptyState } from "./empty-state";
 import { Footer } from "./footer";
 import { Item } from "./item";
 import type {
-    CollectionItem,
-    CollectionItemProps,
-    CollectionListProps,
+  CollectionItem,
+  CollectionItemProps,
+  CollectionListProps,
 } from "./types";
 
 export function Root({
@@ -57,12 +57,11 @@ export function Root({
   return (
     <View className={cn("flex-1 overflow-hidden bg-zinc-950", className)}>
       <FlatList
-        key={listKey}
         testID="collection-list"
+        key={listKey}
         data={items}
         keyExtractor={(item) => item.word}
         renderItem={renderCollectionItem}
-        numColumns={3}
         contentContainerStyle={!hasItems ? { flexGrow: 1 } : undefined}
         ListEmptyComponent={
           <EmptyState

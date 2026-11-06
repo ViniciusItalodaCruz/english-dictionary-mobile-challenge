@@ -132,7 +132,7 @@ describe("CollectionList", () => {
     });
 
     expect(onRemove).not.toHaveBeenCalled();
-    expect(screen.getByText("Removing...")).toBeTruthy();
+    expect(screen.getByLabelText("Removing hello")).toBeTruthy();
   });
 
   it("loads more items when the end is reached", async () => {
@@ -226,5 +226,41 @@ describe("CollectionList", () => {
     );
 
     expect(screen.getByText("favorite")).toBeTruthy();
+  });
+
+  it("renders items in a single column", async () => {
+    const screen = await render(
+      <CollectionList.Root listKey="history" items={items} />,
+    );
+
+    const list = screen.getByTestId("collection-list");
+
+    expect(list.props.numColumns ?? 1).toBe(1);
+
+    expect(screen.getByText("hello")).toBeTruthy();
+    expect(screen.getByText("world")).toBeTruthy();
+  });
+
+  it("renders the remove action and calls the callback", async () => {
+    const onRemove = jest.fn();
+
+    const screen = await render(
+      <CollectionList.Root
+        listKey="history"
+        items={items}
+        onRemove={onRemove}
+      />,
+    );
+
+    const removeButton = screen.getByLabelText("Remove hello");
+
+    expect(removeButton).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(removeButton);
+    });
+
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    expect(onRemove).toHaveBeenCalledWith("hello");
   });
 });

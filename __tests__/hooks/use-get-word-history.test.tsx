@@ -393,4 +393,103 @@ describe("useGetWordHistory", () => {
       ]),
     ).toBeDefined();
   });
+
+  it("fetches history when isCurrentTab is true", async () => {
+    mockedGetWordHistory.mockResolvedValueOnce(createPage());
+
+    const { result } = await renderHook(() => useGetWordHistory(true), {
+      wrapper,
+    });
+
+    await waitFor(() => {
+      expect(result.current.history).toHaveLength(1);
+    });
+
+    expect(mockedGetWordHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not fetch history when isCurrentTab is false", async () => {
+    const { result } = await renderHook(() => useGetWordHistory(false), {
+      wrapper,
+    });
+
+    expect(mockedGetWordHistory).not.toHaveBeenCalled();
+    expect(result.current.history).toEqual([]);
+    expect(result.current.isEmpty).toBe(false);
+    expect(result.current.hasNextPage).toBe(false);
+  });
+
+  it("fetches history when the tab becomes active", async () => {
+    mockedGetWordHistory.mockResolvedValueOnce(createPage());
+
+    const { result, rerender } = await renderHook(
+      ({ isCurrentTab }: { isCurrentTab: boolean }) =>
+        useGetWordHistory(isCurrentTab),
+      {
+        initialProps: { isCurrentTab: false },
+        wrapper,
+      },
+    );
+
+    expect(mockedGetWordHistory).not.toHaveBeenCalled();
+
+    await rerender({ isCurrentTab: true });
+
+    await waitFor(() => {
+      expect(result.current.history).toHaveLength(1);
+    });
+
+    expect(mockedGetWordHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not refetch when the tab becomes inactive", async () => {
+    mockedGetWordHistory.mockResolvedValueOnce(createPage());
+
+    const { result, rerender } = await renderHook(
+      ({ isCurrentTab }: { isCurrentTab: boolean }) =>
+        useGetWordHistory(isCurrentTab),
+      {
+        initialProps: { isCurrentTab: true },
+        wrapper,
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.history).toHaveLength(1);
+    });
+
+    await rerender({ isCurrentTab: false });
+
+    expect(mockedGetWordHistory).toHaveBeenCalledTimes(1);
+    expect(result.current.history).toHaveLength(1);
+  });
+
+  it("preserves cached history when the tab becomes active again", async () => {
+    mockedGetWordHistory.mockResolvedValue(createPage());
+
+    const { result, rerender } = await renderHook(
+      ({ isCurrentTab }: { isCurrentTab: boolean }) =>
+        useGetWordHistory(isCurrentTab),
+      {
+        initialProps: { isCurrentTab: true },
+        wrapper,
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.history).toHaveLength(1);
+    });
+
+    await rerender({ isCurrentTab: false });
+
+    expect(result.current.history).toHaveLength(1);
+
+    await rerender({ isCurrentTab: true });
+
+    expect(result.current.history).toHaveLength(1);
+
+    await waitFor(() => {
+      expect(mockedGetWordHistory).toHaveBeenCalledTimes(2);
+    });
+  });
 });

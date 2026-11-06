@@ -10,7 +10,7 @@ type WordListSearchParams = {
   pageSize?: string | string[];
 };
 
-export const useGetWordList = () => {
+export const useGetWordList = (isCurrentTab: boolean = true) => {
   const params = useLocalSearchParams<WordListSearchParams>();
 
   const initialPage = parseInteger({
@@ -40,7 +40,7 @@ export const useGetWordList = () => {
   } = useInfiniteQuery({
     queryKey: ["word-list", { initialPage, pageSize }] as const,
     initialPageParam: initialPage,
-
+    enabled: isCurrentTab,
     queryFn: ({ pageParam, signal }) =>
       getWordList({
         page: pageParam,

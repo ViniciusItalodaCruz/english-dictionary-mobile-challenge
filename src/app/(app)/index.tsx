@@ -1,12 +1,11 @@
 import { SignOutButton } from "@/modules/authentication/components";
-import { ScrollListInfinity } from "@/modules/home/components";
-import { useGetWordList } from "@/modules/home/hooks";
+import { HistoryList, WordList } from "@/modules/home/components";
 import { Tabs } from "@/shared/components";
 import { useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-enum TabsEnum {
+export enum TabsEnum {
   WordList = "word-list",
   History = "history",
   Favorites = "favorites",
@@ -16,16 +15,6 @@ export default function Index() {
   const [selectedTab, setSelectedTab] = useState<TabsEnum>(TabsEnum.WordList);
 
   const insets = useSafeAreaInsets();
-
-  const {
-    words,
-    isLoading,
-    isLoadingMore,
-    isError,
-    hasNextPage,
-    loadMore,
-    retry,
-  } = useGetWordList();
 
   return (
     <View
@@ -60,32 +49,7 @@ export default function Index() {
           value={TabsEnum.WordList}
           title="Word list"
         >
-          {isLoading ? (
-            <View className="flex-1 items-center justify-center">
-              <ActivityIndicator
-                size="large"
-                color="#a1a1aa"
-                accessibilityLabel="Loading words"
-              />
-            </View>
-          ) : (
-            <ScrollListInfinity
-              listKey={TabsEnum.WordList}
-              words={words}
-              itemClassName="min-h-28"
-              itemTextClassName="font-semibold"
-              hasNextPage={hasNextPage}
-              isLoadingMore={isLoadingMore}
-              error={isError ? "Unable to load words." : null}
-              onLoadMore={loadMore}
-              onRetry={retry}
-              emptyComponent={
-                <Text className="py-6 text-center text-zinc-400">
-                  No words found.
-                </Text>
-              }
-            />
-          )}
+          <WordList isCurrentTab={selectedTab === TabsEnum.WordList} />
         </Tabs.Content>
 
         <Tabs.Content
@@ -93,7 +57,7 @@ export default function Index() {
           value={TabsEnum.History}
           title="History"
         >
-          <Text className="text-zinc-400">History</Text>
+          <HistoryList isCurrentTab={selectedTab === TabsEnum.History} />
         </Tabs.Content>
 
         <Tabs.Content

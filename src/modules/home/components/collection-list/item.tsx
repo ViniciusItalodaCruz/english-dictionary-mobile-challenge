@@ -1,6 +1,7 @@
 import { cn } from "@/shared/utils";
+import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { CollectionItemProps } from "./types";
 
@@ -13,9 +14,8 @@ export function Item({
   return (
     <View
       className={cn(
-        "min-h-28 w-1/3 items-center justify-center",
-        "border-b border-r border-zinc-800",
-        "bg-zinc-900",
+        "min-h-20 w-full flex-row items-center",
+        "border-b border-zinc-800 bg-zinc-900",
         className,
       )}
     >
@@ -29,9 +29,9 @@ export function Item({
         <Pressable
           accessibilityRole="link"
           accessibilityLabel={`View details of ${word}`}
-          className="w-full flex-1 items-center justify-center px-2"
+          className="min-h-20 flex-1 justify-center px-4 active:bg-zinc-800"
         >
-          <Text className="text-center text-base font-semibold text-neutral-50">
+          <Text className="text-base font-semibold text-neutral-50">
             {word}
           </Text>
         </Pressable>
@@ -44,11 +44,17 @@ export function Item({
           accessibilityState={{ disabled: isRemoving }}
           disabled={isRemoving}
           onPress={() => onRemove(word)}
-          className="w-full items-center justify-center py-2 active:bg-zinc-800"
+          className="h-14 w-14 items-center justify-center active:bg-zinc-800"
         >
-          <Text className="text-xs text-zinc-400">
-            {isRemoving ? "Removing..." : "Remove"}
-          </Text>
+          {isRemoving ? (
+            <ActivityIndicator
+              size="small"
+              color="#a1a1aa"
+              accessibilityLabel={`Removing ${word}`}
+            />
+          ) : (
+            <Ionicons name="trash-outline" size={20} color="#a1a1aa" />
+          )}
         </Pressable>
       ) : null}
     </View>

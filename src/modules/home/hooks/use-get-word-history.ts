@@ -7,7 +7,7 @@ import { getWordHistory } from "../services";
 
 const PAGE_SIZE = 20;
 
-export function useGetWordHistory() {
+export function useGetWordHistory(isCurrentTab: boolean = true) {
   const userId = useAuthStore((state) =>
     state.status === "authenticated" ? state.session?.user.id : undefined,
   );
@@ -25,10 +25,9 @@ export function useGetWordHistory() {
     refetch,
   } = useInfiniteQuery({
     queryKey: [AUTHENTICATED_QUERY_SCOPE, userId, "word-history"] as const,
-
     initialPageParam: 0,
 
-    enabled: Boolean(userId),
+    enabled: Boolean(userId) && isCurrentTab,
 
     queryFn: ({ pageParam, signal }) =>
       getWordHistory({
