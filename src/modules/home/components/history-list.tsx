@@ -2,7 +2,11 @@ import { CollectionList } from "@/modules/home/components";
 
 import { useDeleteWordHistory, useGetWordHistory } from "../hooks";
 
-export function HistoryList() {
+type HistoryListProps = {
+  isCurrentTab: boolean;
+};
+
+export function HistoryList({ isCurrentTab }: Readonly<HistoryListProps>) {
   const {
     history,
     isLoading,
@@ -11,7 +15,7 @@ export function HistoryList() {
     hasNextPage,
     loadMore,
     retry,
-  } = useGetWordHistory();
+  } = useGetWordHistory(isCurrentTab);
 
   const { removeWord, isRemovingWord } = useDeleteWordHistory();
 

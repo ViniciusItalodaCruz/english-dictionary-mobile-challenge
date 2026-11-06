@@ -63,7 +63,7 @@ describe("HistoryList", () => {
   });
 
   it("passes history and pagination to CollectionList", async () => {
-    await render(<HistoryList />);
+    await render(<HistoryList isCurrentTab />);
 
     expect(mockedCollectionRoot).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -80,7 +80,7 @@ describe("HistoryList", () => {
   });
 
   it("passes the remove action to CollectionList", async () => {
-    await render(<HistoryList />);
+    await render(<HistoryList isCurrentTab />);
 
     expect(mockedCollectionRoot).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -97,7 +97,7 @@ describe("HistoryList", () => {
       isLoading: true,
     });
 
-    await render(<HistoryList />);
+    await render(<HistoryList isCurrentTab />);
 
     expect(mockedCollectionRoot).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -113,7 +113,7 @@ describe("HistoryList", () => {
       isError: true,
     });
 
-    await render(<HistoryList />);
+    await render(<HistoryList isCurrentTab />);
 
     expect(mockedCollectionRoot).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -124,7 +124,7 @@ describe("HistoryList", () => {
   });
 
   it("provides the empty state message", async () => {
-    await render(<HistoryList />);
+    await render(<HistoryList isCurrentTab />);
 
     expect(mockedCollectionRoot).toHaveBeenCalledWith(
       expect.objectContaining({

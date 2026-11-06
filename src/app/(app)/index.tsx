@@ -1,8 +1,12 @@
 import { SignOutButton } from "@/modules/authentication/components";
-import { HistoryList, WordList } from "@/modules/home/components";
+import {
+  FavoritesList,
+  HistoryList,
+  WordList,
+} from "@/modules/home/components";
 import { Tabs } from "@/shared/components";
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export enum TabsEnum {
@@ -65,7 +69,7 @@ export default function Index() {
           value={TabsEnum.Favorites}
           title="Favorites"
         >
-          <Text className="text-zinc-400">Favorites</Text>
+          <FavoritesList isCurrentTab={selectedTab === TabsEnum.Favorites} />
         </Tabs.Content>
       </Tabs>
     </View>
