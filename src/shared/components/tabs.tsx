@@ -126,8 +126,8 @@ function Trigger({
       <TouchableOpacity
         {...props}
         className={cn(
-          "flex-1 items-center justify-center border border-zinc-700 py-4",
-          isActive ? "bg-zinc-700" : "bg-zinc-800",
+          "flex-1 items-center justify-center border border-zinc-800 py-4",
+          isActive ? "bg-zinc-800" : "bg-zinc-900",
           disabled && "opacity-50",
           className,
         )}
@@ -146,7 +146,7 @@ function Trigger({
   );
 }
 
-function Item({ children, className, ...props }: TextProps) {
+function Item({ children, className, ...props }: Readonly<TextProps>) {
   const { isActive } = useTabsTriggerContext();
 
   return (
@@ -154,7 +154,7 @@ function Item({ children, className, ...props }: TextProps) {
       {...props}
       className={cn(
         "text-center text-xl font-medium",
-        isActive ? "text-white" : "text-zinc-400",
+        isActive ? "text-neutral-50" : "text-zinc-400",
         className,
       )}
     >
@@ -176,7 +176,7 @@ function Content({
 
   return (
     <View {...props} className={cn("w-full py-4", className)}>
-      <Text className="text-2xl font-medium mb-4">{title}</Text>
+      <Text className="text-2xl font-medium mb-4 text-white">{title}</Text>
       {children}
     </View>
   );

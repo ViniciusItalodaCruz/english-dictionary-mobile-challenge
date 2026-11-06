@@ -28,7 +28,7 @@ export function ErrorFeedback({ message, onRetry }: ErrorFeedbackProps) {
     <Feedback>
       <Text
         accessibilityRole="alert"
-        className="text-center text-sm leading-5 text-red-700"
+        className="text-center text-sm leading-5 text-red-400"
       >
         {message}
       </Text>
@@ -39,11 +39,11 @@ export function ErrorFeedback({ message, onRetry }: ErrorFeedbackProps) {
           onPress={onRetry}
           className={cn(
             "min-h-12 items-center justify-center rounded-lg",
-            "border border-blue-200 bg-blue-50 px-4 py-3",
-            "active:bg-blue-100",
+            "border border-zinc-700 bg-zinc-800 px-4 py-3",
+            "active:bg-zinc-700",
           )}
         >
-          <Text className="text-sm font-semibold text-blue-800">Try again</Text>
+          <Text className="text-sm font-semibold text-neutral-50">Try again</Text>
         </Pressable>
       )}
     </Feedback>

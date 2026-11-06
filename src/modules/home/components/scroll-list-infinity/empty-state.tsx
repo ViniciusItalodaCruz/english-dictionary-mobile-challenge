@@ -22,7 +22,7 @@ export function EmptyState({
   return (
     emptyComponent ?? (
       <Feedback>
-        <Text className="text-center text-sm leading-5 text-slate-500">
+        <Text className="text-center text-sm leading-5 text-zinc-400">
           {message}
         </Text>
       </Feedback>

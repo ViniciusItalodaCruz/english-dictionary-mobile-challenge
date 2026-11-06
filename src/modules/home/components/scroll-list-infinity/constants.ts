@@ -7,8 +7,8 @@ export const LIST_CONFIG = {
 } as const;
 
 export const COLORS = {
-  border: "#e2e8f0",
-  loading: "#2563eb",
+  border: "#27272a",
+  loading: "#a1a1aa",
 } as const;
 
 export const COLUMN_WRAPPER_STYLE = {

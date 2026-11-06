@@ -1,3 +1,4 @@
+import { SignOutButton } from "@/modules/authentication/components";
 import { ScrollListInfinity } from "@/modules/home/components";
 import { useGetWordList } from "@/modules/home/hooks";
 import { Tabs } from "@/shared/components";
@@ -27,7 +28,14 @@ export default function Index() {
   } = useGetWordList();
 
   return (
-    <View className="flex-1 px-1" style={{ paddingTop: insets.top }}>
+    <View
+      className="flex-1 px-1 bg-zinc-950"
+      style={{ paddingTop: insets.top }}
+    >
+      <View className="flex-row items-center justify-end">
+        <SignOutButton />
+      </View>
+
       <Tabs
         className="flex-1"
         value={selectedTab}
@@ -56,6 +64,7 @@ export default function Index() {
             <View className="flex-1 items-center justify-center">
               <ActivityIndicator
                 size="large"
+                color="#a1a1aa"
                 accessibilityLabel="Loading words"
               />
             </View>
@@ -71,7 +80,9 @@ export default function Index() {
               onLoadMore={loadMore}
               onRetry={retry}
               emptyComponent={
-                <Text className="py-6 text-center">No words found.</Text>
+                <Text className="py-6 text-center text-zinc-400">
+                  No words found.
+                </Text>
               }
             />
           )}
@@ -82,7 +93,7 @@ export default function Index() {
           value={TabsEnum.History}
           title="History"
         >
-          <Text>History</Text>
+          <Text className="text-zinc-400">History</Text>
         </Tabs.Content>
 
         <Tabs.Content
@@ -90,7 +101,7 @@ export default function Index() {
           value={TabsEnum.Favorites}
           title="Favorites"
         >
-          <Text>Favorites</Text>
+          <Text className="text-zinc-400">Favorites</Text>
         </Tabs.Content>
       </Tabs>
     </View>

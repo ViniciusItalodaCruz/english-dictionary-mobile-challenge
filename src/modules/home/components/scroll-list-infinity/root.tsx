@@ -66,7 +66,7 @@ export function Root({
   }, [canLoadMore, onLoadMore]);
 
   return (
-    <View className={cn("flex-1 overflow-hidden bg-white", className)}>
+    <View className={cn("flex-1 overflow-hidden bg-zinc-950", className)}>
       <FlatList
         key={listKey}
         style={LIST_STYLE}

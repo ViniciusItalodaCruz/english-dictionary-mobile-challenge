@@ -8,6 +8,7 @@ type ButtonProps = TouchableOpacityProps & {
 export const Button = ({
   variant = "primary",
   className,
+  disabled,
   ...props
 }: ButtonProps) => (
   <TouchableOpacity
@@ -15,7 +16,9 @@ export const Button = ({
       className,
       "py-6 px-8",
       variant === "primary" ? "bg-neutral-50" : "bg-zinc-800",
+      disabled && "opacity-50",
     )}
+    disabled={disabled}
     {...props}
   >
     <Text

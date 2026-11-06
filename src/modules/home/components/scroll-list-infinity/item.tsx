@@ -9,8 +9,8 @@ export function Item({ word, className, textClassName }: WordItemProps) {
     <View
       className={cn(
         "min-h-24 w-1/3 items-center justify-center",
-        "border-b border-r border-slate-200",
-        "bg-white",
+        "border-b border-r border-zinc-800",
+        "bg-zinc-900",
         className,
       )}
     >
@@ -24,8 +24,8 @@ export function Item({ word, className, textClassName }: WordItemProps) {
         <Text
           accessibilityLabel={`View details of ${word}`}
           className={cn(
-            "w-full px-2 py-4 text-center text-base font-medium text-slate-800",
-            "active:bg-blue-50",
+            "w-full px-2 py-4 text-center text-base font-medium text-neutral-50",
+            "active:bg-zinc-800",
             textClassName,
           )}
         >
