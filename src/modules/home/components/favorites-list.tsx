@@ -1,4 +1,4 @@
-import { useGetWordFavorites } from "../hooks";
+import { useDeleteWordFavorite, useGetWordFavorites } from "../hooks";
 import { CollectionList } from "./collection-list";
 
 type FavoritesListProps = {
@@ -16,6 +16,8 @@ export function FavoritesList({ isCurrentTab }: Readonly<FavoritesListProps>) {
     retry,
   } = useGetWordFavorites(isCurrentTab);
 
+  const { removeFavorite, isRemovingWord } = useDeleteWordFavorite();
+
   return (
     <CollectionList.Root
       listKey="favorites"
@@ -27,6 +29,8 @@ export function FavoritesList({ isCurrentTab }: Readonly<FavoritesListProps>) {
       emptyMessage="No favorite words yet."
       onLoadMore={loadMore}
       onRetry={retry}
+      onRemove={removeFavorite}
+      isRemovingWord={isRemovingWord}
     />
   );
 }

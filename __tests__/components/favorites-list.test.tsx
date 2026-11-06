@@ -1,10 +1,18 @@
 import { CollectionList } from "@/modules/home/components/collection-list";
 import { FavoritesList } from "@/modules/home/components/favorites-list";
-import { useGetWordFavorites } from "@/modules/home/hooks";
+import {
+    useDeleteWordFavorite,
+    useGetWordFavorites,
+} from "@/modules/home/hooks";
 import { cleanup, render } from "@testing-library/react-native";
 
 jest.mock("@/modules/home/hooks", () => ({
   useGetWordFavorites: jest.fn(),
+}));
+
+jest.mock("@/modules/home/hooks", () => ({
+  useGetWordFavorites: jest.fn(),
+  useDeleteWordFavorite: jest.fn(),
 }));
 
 jest.mock("@/modules/home/components/collection-list", () => ({
@@ -15,6 +23,10 @@ jest.mock("@/modules/home/components/collection-list", () => ({
 
 const mockedUseGetWordFavorites = jest.mocked(useGetWordFavorites);
 const mockedCollectionRoot = jest.mocked(CollectionList.Root);
+const mockedUseDeleteWordFavorite = jest.mocked(useDeleteWordFavorite);
+
+const removeFavorite = jest.fn();
+const isRemovingWord = jest.fn((word: string) => word === "hello");
 
 const favorites = [
   {
@@ -51,6 +63,13 @@ describe("FavoritesList", () => {
     jest.clearAllMocks();
 
     mockedUseGetWordFavorites.mockReturnValue(createFavoritesState());
+    mockedUseDeleteWordFavorite.mockReturnValue({
+      removeFavorite,
+      isRemovingWord,
+      removingWords: [],
+      isError: false,
+      error: null,
+    });
   });
 
   afterEach(async () => {
@@ -136,10 +155,38 @@ describe("FavoritesList", () => {
     expect(getCollectionProps().emptyMessage).toBe("No favorite words yet.");
   });
 
-  it("does not expose removal before deletion is implemented", async () => {
+  it("passes the removal callback to CollectionList", async () => {
     await render(<FavoritesList isCurrentTab />);
 
-    expect(getCollectionProps().onRemove).toBeUndefined();
-    expect(getCollectionProps().isRemovingWord).toBeUndefined();
+    expect(getCollectionProps().onRemove).toBe(removeFavorite);
+  });
+
+  it("passes the per-word removal state to CollectionList", async () => {
+    await render(<FavoritesList isCurrentTab />);
+
+    expect(getCollectionProps().isRemovingWord).toBe(isRemovingWord);
+
+    expect(getCollectionProps()?.isRemovingWord?.("hello")).toBe(true);
+    expect(getCollectionProps()?.isRemovingWord?.("world")).toBe(false);
+  });
+
+  it("keeps the removal action available when pagination ends", async () => {
+    mockedUseGetWordFavorites.mockReturnValue(
+      createFavoritesState({
+        hasNextPage: false,
+      }),
+    );
+
+    await render(<FavoritesList isCurrentTab />);
+
+    expect(getCollectionProps().hasNextPage).toBe(false);
+    expect(getCollectionProps().onRemove).toBe(removeFavorite);
+  });
+
+  it("preserves listing retry independently of favorite removal", async () => {
+    await render(<FavoritesList isCurrentTab />);
+
+    expect(getCollectionProps().onRetry).toBe(retry);
+    expect(getCollectionProps().onRemove).toBe(removeFavorite);
   });
 });
