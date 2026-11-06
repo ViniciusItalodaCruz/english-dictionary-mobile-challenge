@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "free-dictionary-api-challenger",
-    "slug": "free-dictionary-api-challenger",
+    "name": "english-dictionary-mobile-challenge",
+    "slug": "english-dictionary-mobile-challenge",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "freedictionaryapichallenger",
+    "scheme": "englishdictionarymobilechallenge",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"

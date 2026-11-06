@@ -32,7 +32,8 @@ O aplicativo abre em uma tela de login. Depois da autenticação, a Home reúne 
 
 A Free Dictionary API não oferece a lista de palavras. Essa lista é lida da tabela `words` no Supabase. O detalhe de cada palavra é consultado em `https://api.dictionaryapi.dev`. Favoritos e histórico ficam no PostgreSQL do Supabase e são associados ao `id` do usuário autenticado.
 
-O `app.json` configura iOS, Android e web, orientação retrato e o scheme `freedictionaryapichallenger`. O nome interno do projeto é `free-dictionary-api-challenger`, versão `1.0.0`. Login, áudio e armazenamento seguro dependem de módulos nativos do Expo. Este documento não registra validação manual em dispositivo, simulador ou navegador.
+O `app.json` configura iOS, Android e web, orientação retrato e o scheme `freedictionaryapichallenger`. O nome interno do projeto é `english-dictionary-mobile-challenge
+`, versão `1.0.0`. Login, áudio e armazenamento seguro dependem de módulos nativos do Expo. Este documento não registra validação manual em dispositivo, simulador ou navegador.
 
 Funcionalidades principais:
 
@@ -48,29 +49,29 @@ Funcionalidades principais:
 
 As versões abaixo são as instaladas em `node_modules` e registradas no `package-lock.json`. O `package.json` declara intervalo em parte dos pacotes. Onde o intervalo e a versão instalada diferem, a diferença está indicada.
 
-| Tecnologia | Versão | Responsabilidade |
-|---|---|---|
-| React | 19.3.0 | Biblioteca de interface |
-| React Native | 0.88.1 | Desenvolvimento mobile |
-| Expo | 58.0.23 | Infraestrutura, módulos nativos e execução |
-| Expo Router | 58.0.30 | Navegação baseada em arquivos |
-| TypeScript | 6.0.3 | Tipagem estática |
-| NativeWind | 4.2.7 | Estilização utilitária sobre Tailwind CSS |
-| Tailwind CSS | 3.4.19 | Preset e processamento das classes |
-| Zustand | 5.0.16 | Estado global da sessão |
-| TanStack Query | 5.106.1 | Estado assíncrono, cache e paginação |
-| Axios | 1.21.0 | Comunicação HTTP |
-| Supabase | serviço externo | Autenticação e PostgreSQL via REST |
-| `@supabase/supabase-js` | 2.119.0 | Pacote instalado; o código da aplicação não o importa |
-| expo-secure-store | 58.0.2 | Persistência da sessão |
-| AsyncStorage | 2.2.0 | Identificador local de instalação |
-| React Hook Form | 7.91.0 | Estado do formulário de login |
-| Zod | 4.6.7 | Validação do formulário |
-| `@hookform/resolvers` | 7.0.3 | Liga o schema Zod ao React Hook Form |
-| Jest | 30.5.2 | Testes automatizados. O `package.json` declara `^30` |
-| jest-expo | 58.0.14 | Preset de teste do Expo |
-| React Native Testing Library | 14.1.0 | Testes de hooks e componentes. O `package.json` declara `^14` |
-| expo-audio | 58.0.11 | Reprodução da pronúncia |
+| Tecnologia                   | Versão          | Responsabilidade                                              |
+| ---------------------------- | --------------- | ------------------------------------------------------------- |
+| React                        | 19.3.0          | Biblioteca de interface                                       |
+| React Native                 | 0.88.1          | Desenvolvimento mobile                                        |
+| Expo                         | 58.0.23         | Infraestrutura, módulos nativos e execução                    |
+| Expo Router                  | 58.0.30         | Navegação baseada em arquivos                                 |
+| TypeScript                   | 6.0.3           | Tipagem estática                                              |
+| NativeWind                   | 4.2.7           | Estilização utilitária sobre Tailwind CSS                     |
+| Tailwind CSS                 | 3.4.19          | Preset e processamento das classes                            |
+| Zustand                      | 5.0.16          | Estado global da sessão                                       |
+| TanStack Query               | 5.106.1         | Estado assíncrono, cache e paginação                          |
+| Axios                        | 1.21.0          | Comunicação HTTP                                              |
+| Supabase                     | serviço externo | Autenticação e PostgreSQL via REST                            |
+| `@supabase/supabase-js`      | 2.119.0         | Pacote instalado; o código da aplicação não o importa         |
+| expo-secure-store            | 58.0.2          | Persistência da sessão                                        |
+| AsyncStorage                 | 2.2.0           | Identificador local de instalação                             |
+| React Hook Form              | 7.91.0          | Estado do formulário de login                                 |
+| Zod                          | 4.6.7           | Validação do formulário                                       |
+| `@hookform/resolvers`        | 7.0.3           | Liga o schema Zod ao React Hook Form                          |
+| Jest                         | 30.5.2          | Testes automatizados. O `package.json` declara `^30`          |
+| jest-expo                    | 58.0.14         | Preset de teste do Expo                                       |
+| React Native Testing Library | 14.1.0          | Testes de hooks e componentes. O `package.json` declara `^14` |
+| expo-audio                   | 58.0.11         | Reprodução da pronúncia                                       |
 
 O ambiente mínimo declarado em `package.json` e reforçado por `.npmrc` (`engine-strict=true`) é Node.js `>=24.15.0` e npm `>=11.12.1`. O arquivo `.nvmrc` fixa Node.js `24.15.0`. Não há versão de projeto Supabase hospedado neste repositório.
 
@@ -295,14 +296,14 @@ A palavra é codificada com `encodeURIComponent`. A chamada não recebe token do
 
 Campos usados pela interface:
 
-| Campo | Uso |
-|---|---|
-| `word` | Título. Se ausente na entrada, a tela usa a palavra da rota |
-| `phonetic` e `phonetics[].text` | Fonética |
-| `phonetics[].audio` | Primeira URL não vazia alimenta o player |
-| `meanings[].partOfSpeech` | Classe gramatical |
-| `meanings[].definitions[].definition` | Definição |
-| `meanings[].definitions[].example` | Exemplo, apenas quando presente |
+| Campo                                 | Uso                                                         |
+| ------------------------------------- | ----------------------------------------------------------- |
+| `word`                                | Título. Se ausente na entrada, a tela usa a palavra da rota |
+| `phonetic` e `phonetics[].text`       | Fonética                                                    |
+| `phonetics[].audio`                   | Primeira URL não vazia alimenta o player                    |
+| `meanings[].partOfSpeech`             | Classe gramatical                                           |
+| `meanings[].definitions[].definition` | Definição                                                   |
+| `meanings[].definitions[].example`    | Exemplo, apenas quando presente                             |
 
 Fonética, áudio e exemplo são opcionais. O resultado fica no cache do TanStack Query pela palavra normalizada e segue o `staleTime` de 5 minutos do client.
 
@@ -319,11 +320,11 @@ POST {EXPO_PUBLIC_SUPABASE_URL}/auth/v1/logout
 
 Dados, na base `{EXPO_PUBLIC_SUPABASE_URL}/rest/v1`:
 
-| Tabela | Operações do app | Campos observados |
-|---|---|---|
-| `words` | `GET`, somente com `apikey` | `word` |
+| Tabela         | Operações do app                   | Campos observados                   |
+| -------------- | ---------------------------------- | ----------------------------------- |
+| `words`        | `GET`, somente com `apikey`        | `word`                              |
 | `word_history` | `GET`, `POST`, `DELETE` com Bearer | `user_id`, `word`, `last_viewed_at` |
-| `favorites` | `GET`, `POST`, `DELETE` com Bearer | `user_id`, `word`, `created_at` |
+| `favorites`    | `GET`, `POST`, `DELETE` com Bearer | `user_id`, `word`, `created_at`     |
 
 O `POST` de favorito envia somente `word`. Para a listagem conseguir ler `user_id` e `created_at`, o banco precisa preencher esses campos na inserção autenticada.
 
@@ -343,11 +344,11 @@ O TanStack Query evita repetir uma busca enquanto o resultado ainda está fresco
 
 A paginação infinita está em três consultas:
 
-| Consulta | Chave | Página |
-|---|---|---|
+| Consulta    | Chave                                      | Página        |
+| ----------- | ------------------------------------------ | ------------- |
 | Lista geral | `["word-list", { initialPage, pageSize }]` | 100, teto 100 |
-| Histórico | `["user", userId, "word-history"]` | 20 |
-| Favoritos | `["user", userId, "word-favorites"]` | 20 |
+| Histórico   | `["user", userId, "word-history"]`         | 20            |
+| Favoritos   | `["user", userId, "word-favorites"]`       | 20            |
 
 O status de uma palavra usa `["user", userId, "word-favorites", word]`. Invalidar o prefixo `word-favorites` daquele usuário atualiza a lista e a estrela.
 
@@ -386,24 +387,24 @@ As variáveis `EXPO_PUBLIC_*` são incorporadas ao bundle do cliente. A `service
 
 ### Obrigatórios
 
-| Requisito | Status | Implementação |
-|---|---|---|
-| Lista de palavras com rolagem infinita | Atendido | Grade de três colunas, `useInfiniteQuery` e `GET /words` |
-| Detalhes, significados e fonética | Atendido | Free Dictionary API, com classe gramatical, definição, exemplo e fonética quando existirem |
-| Adicionar aos favoritos | Atendido | `POST /favorites` a partir da estrela |
-| Remover dos favoritos | Atendido | `DELETE /favorites` na estrela e na lista |
-| Histórico de palavras visualizadas | Atendido | Upsert ao abrir a palavra, lista paginada e remoção |
-| Cache de requisições | Atendido | TanStack Query, com reutilização por chave e `staleTime` de 5 minutos |
-| Interface baseada no wireframe | Atendido | Abas Word list, History e Favorites, grade de três colunas e detalhe com fechar, palavra, fonética, áudio, significados, Voltar e Próximo. O desafio permite reposicionar itens |
+| Requisito                              | Status   | Implementação                                                                                                                                                                   |
+| -------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lista de palavras com rolagem infinita | Atendido | Grade de três colunas, `useInfiniteQuery` e `GET /words`                                                                                                                        |
+| Detalhes, significados e fonética      | Atendido | Free Dictionary API, com classe gramatical, definição, exemplo e fonética quando existirem                                                                                      |
+| Adicionar aos favoritos                | Atendido | `POST /favorites` a partir da estrela                                                                                                                                           |
+| Remover dos favoritos                  | Atendido | `DELETE /favorites` na estrela e na lista                                                                                                                                       |
+| Histórico de palavras visualizadas     | Atendido | Upsert ao abrir a palavra, lista paginada e remoção                                                                                                                             |
+| Cache de requisições                   | Atendido | TanStack Query, com reutilização por chave e `staleTime` de 5 minutos                                                                                                           |
+| Interface baseada no wireframe         | Atendido | Abas Word list, History e Favorites, grade de três colunas e detalhe com fechar, palavra, fonética, áudio, significados, Voltar e Próximo. O desafio permite reposicionar itens |
 
 ### Diferenciais
 
-| Requisito | Status | Implementação |
-|---|---|---|
-| Reprodução de áudio | Atendido | `expo-audio` com a URL devolvida pela Dictionary API |
-| Injeção de dependência | Não implementado | Não há container, decorators nem biblioteca de DI. Os módulos se compõem por import direto |
-| Testes unitários ou E2E | Atendido | Jest e React Native Testing Library. Não há E2E |
-| Autenticação com persistência por usuário | Atendido | Login com e-mail e senha, sessão no SecureStore, histórico e favoritos associados ao usuário no Supabase |
+| Requisito                                 | Status           | Implementação                                                                                            |
+| ----------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------- |
+| Reprodução de áudio                       | Atendido         | `expo-audio` com a URL devolvida pela Dictionary API                                                     |
+| Injeção de dependência                    | Não implementado | Não há container, decorators nem biblioteca de DI. Os módulos se compõem por import direto               |
+| Testes unitários ou E2E                   | Atendido         | Jest e React Native Testing Library. Não há E2E                                                          |
+| Autenticação com persistência por usuário | Atendido         | Login com e-mail e senha, sessão no SecureStore, histórico e favoritos associados ao usuário no Supabase |
 
 ## Pré-requisitos
 
@@ -421,8 +422,10 @@ No web, o `app.json` usa Metro com `output: server` e existe o script `npm run w
 ## Instalação e execução
 
 ```bash
-git clone https://github.com/ViniciusItalodaCruz/free-dictionary-api-challenger.git
-cd free-dictionary-api-challenger
+git clone https://github.com/ViniciusItalodaCruz/english-dictionary-mobile-challenge
+.git
+cd english-dictionary-mobile-challenge
+
 npm ci
 ```
 
