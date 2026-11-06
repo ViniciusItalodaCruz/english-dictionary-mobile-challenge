@@ -1,5 +1,5 @@
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const AUDIO_LOAD_TIMEOUT = 10_000;
 
@@ -7,17 +7,53 @@ export function useWordAudioPlayer(audioUrl: string | null) {
   const player = useAudioPlayer(audioUrl, {
     updateInterval: 100,
   });
-
   const status = useAudioPlayerStatus(player);
-
+  const playerRef = useRef(player);
+  const ignoredErrorRef = useRef<string | null>(null);
   const [hasTimedOut, setHasTimedOut] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   const hasAudio = Boolean(audioUrl);
-  const hasError = Boolean(status.error) || hasTimedOut;
+  const statusError = status.error;
+  const isIgnoredError =
+    statusError !== null &&
+    statusError === ignoredErrorRef.current &&
+    !status.isLoaded;
+  const hasError = (statusError !== null && !isIgnoredError) || hasTimedOut;
 
   useEffect(() => {
-    if (!hasAudio || status.isLoaded || status.error) {
+    playerRef.current = player;
+  }, [player]);
+
+  useEffect(() => {
+    ignoredErrorRef.current = null;
+    setHasTimedOut(false);
+    setAttempt(0);
+
+    return () => {
+      playerRef.current.pause();
+    };
+  }, [audioUrl]);
+
+  useEffect(() => {
+    if (!status.isLoaded) {
+      return;
+    }
+
+    ignoredErrorRef.current = null;
+    setHasTimedOut(false);
+  }, [status.isLoaded]);
+
+  useEffect(() => {
+    if (!hasAudio || status.isLoaded) {
+      return;
+    }
+
+    const currentError = status.error;
+    const isStaleError =
+      currentError !== null && currentError === ignoredErrorRef.current;
+
+    if (currentError && !isStaleError) {
       return;
     }
 
@@ -25,19 +61,27 @@ export function useWordAudioPlayer(audioUrl: string | null) {
       setHasTimedOut(true);
     }, AUDIO_LOAD_TIMEOUT);
 
-    return () => clearTimeout(timeout);
-  }, [hasAudio, status.isLoaded, status.error, attempt]);
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [audioUrl, attempt, hasAudio, status.error, status.isLoaded]);
 
-  const retry = useCallback((): void => {
-    if (!audioUrl) return;
+  const retry = (): void => {
+    if (!audioUrl) {
+      return;
+    }
 
+    ignoredErrorRef.current = status.error;
     setHasTimedOut(false);
     setAttempt((current) => current + 1);
+    player.pause();
     player.replace(audioUrl);
-  }, [audioUrl, player]);
+  };
 
-  const togglePlayback = useCallback((): void => {
-    if (!hasAudio || hasError || !status.isLoaded) return;
+  const togglePlayback = (): void => {
+    if (!hasAudio || hasError || !status.isLoaded) {
+      return;
+    }
 
     if (status.playing) {
       player.pause();
@@ -45,7 +89,7 @@ export function useWordAudioPlayer(audioUrl: string | null) {
     }
 
     player.play();
-  }, [hasAudio, hasError, status.isLoaded, status.playing, player]);
+  };
 
   const progress =
     status.duration > 0
@@ -62,8 +106,7 @@ export function useWordAudioPlayer(audioUrl: string | null) {
 
   return {
     hasAudio,
-    isLoading:
-      hasAudio && !hasError && (!status.isLoaded || status.isBuffering),
+    isLoading: hasAudio && !hasError && !status.isLoaded,
     isPlaying: status.playing,
     hasError,
     accessibilityLabel,

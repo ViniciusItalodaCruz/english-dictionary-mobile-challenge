@@ -7,13 +7,16 @@ interface WordCardProps {
 
 export function WordCard({ word, phonetic }: Readonly<WordCardProps>) {
   return (
-    <View className="min-h-40 items-center justify-center gap-4 border border-zinc-700 bg-zinc-700 px-4 py-8">
-      <Text className="text-center text-xl font-medium text-zinc-950">
+    <View className="min-h-40 items-center justify-center gap-3 bg-zinc-800 px-4 py-10">
+      <Text
+        accessibilityRole="header"
+        className="text-center text-3xl font-semibold text-neutral-50"
+      >
         {word}
       </Text>
 
       {phonetic ? (
-        <Text className="text-center text-lg text-neutral-50">{phonetic}</Text>
+        <Text className="text-center text-lg text-zinc-300">{phonetic}</Text>
       ) : null}
     </View>
   );

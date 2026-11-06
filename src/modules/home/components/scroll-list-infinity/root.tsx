@@ -44,6 +44,7 @@ export function Root({
     ({ item }) => {
       const itemProps: WordItemProps = {
         word: item,
+        source: listKey,
         className: itemClassName,
         textClassName: itemTextClassName,
       };
@@ -54,7 +55,7 @@ export function Root({
 
       return <Item {...itemProps} />;
     },
-    [itemClassName, itemTextClassName, renderItem],
+    [itemClassName, itemTextClassName, listKey, renderItem],
   );
 
   const handleEndReached = useCallback(() => {

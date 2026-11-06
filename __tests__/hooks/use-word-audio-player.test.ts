@@ -224,4 +224,128 @@ describe("useWordAudioPlayer", () => {
     expect(result.current.hasError).toBe(false);
     expect(result.current.isLoading).toBe(false);
   });
+
+  it("cancels the loading timeout when the audio loads", async () => {
+    mockedStatus.mockReturnValue(
+      createStatus({
+        isLoaded: false,
+        error: null,
+      }) as ReturnType<typeof useAudioPlayerStatus>,
+    );
+
+    const { result, rerender } = await renderHook(() =>
+      useWordAudioPlayer(audioUrl),
+    );
+
+    await act(async () => {
+      jest.advanceTimersByTime(5_000);
+    });
+
+    mockedStatus.mockReturnValue(
+      createStatus({
+        isLoaded: true,
+        error: null,
+      }) as ReturnType<typeof useAudioPlayerStatus>,
+    );
+
+    await rerender(undefined);
+
+    await act(async () => {
+      jest.advanceTimersByTime(10_000);
+    });
+
+    expect(result.current.hasError).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("starts a new attempt after an explicit loading error", async () => {
+    mockedStatus.mockReturnValue(
+      createStatus({
+        isLoaded: false,
+        error: "Unable to load audio",
+      }) as ReturnType<typeof useAudioPlayerStatus>,
+    );
+
+    const { result } = await renderHook(() => useWordAudioPlayer(audioUrl));
+
+    expect(result.current.hasError).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      result.current.retry();
+    });
+
+    expect(mockReplace).toHaveBeenCalledWith(audioUrl);
+    expect(mockPause).toHaveBeenCalled();
+    expect(result.current.hasError).toBe(false);
+    expect(result.current.isLoading).toBe(true);
+  });
+
+  it("clears a failed attempt when the audio URL changes", async () => {
+    mockedStatus.mockReturnValue(
+      createStatus({
+        isLoaded: false,
+        error: null,
+      }) as ReturnType<typeof useAudioPlayerStatus>,
+    );
+
+    const { result, rerender } = await renderHook(
+      ({ url }: { url: string }) => useWordAudioPlayer(url),
+      { initialProps: { url: audioUrl } },
+    );
+
+    await act(async () => {
+      jest.advanceTimersByTime(10_000);
+    });
+
+    expect(result.current.hasError).toBe(true);
+
+    await rerender({ url: "https://example.com/world.mp3" });
+
+    expect(mockPause).toHaveBeenCalled();
+    expect(mockedPlayer).toHaveBeenLastCalledWith(
+      "https://example.com/world.mp3",
+      { updateInterval: 100 },
+    );
+    expect(result.current.hasError).toBe(false);
+    expect(result.current.isLoading).toBe(true);
+  });
+
+  it("does not replace the play control after the audio has loaded", async () => {
+    mockedStatus.mockReturnValue(
+      createStatus({
+        isLoaded: true,
+        isBuffering: true,
+      }) as ReturnType<typeof useAudioPlayerStatus>,
+    );
+
+    const { result } = await renderHook(() => useWordAudioPlayer(audioUrl));
+
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      result.current.togglePlayback();
+    });
+
+    expect(mockPlay).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels a pending timeout when the player is removed", async () => {
+    mockedStatus.mockReturnValue(
+      createStatus({
+        isLoaded: false,
+        error: null,
+      }) as ReturnType<typeof useAudioPlayerStatus>,
+    );
+
+    const { unmount } = await renderHook(() => useWordAudioPlayer(audioUrl));
+
+    unmount();
+
+    await act(async () => {
+      jest.advanceTimersByTime(10_000);
+    });
+
+    expect(mockPause).toHaveBeenCalled();
+  });
 });

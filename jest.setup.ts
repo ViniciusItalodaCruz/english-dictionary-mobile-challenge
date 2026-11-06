@@ -1,6 +1,22 @@
 process.env.EXPO_PUBLIC_SUPABASE_URL ||= "https://example.supabase.co";
 process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||= "test-publishable-key";
 
+jest.mock("expo-audio", () => ({
+  useAudioPlayer: jest.fn(() => ({
+    play: jest.fn(),
+    pause: jest.fn(),
+    replace: jest.fn(),
+  })),
+  useAudioPlayerStatus: jest.fn(() => ({
+    isLoaded: false,
+    isBuffering: false,
+    playing: false,
+    currentTime: 0,
+    duration: 0,
+    error: null,
+  })),
+}));
+
 jest.mock("@react-native-async-storage/async-storage", () => ({
   __esModule: true,
   default: {

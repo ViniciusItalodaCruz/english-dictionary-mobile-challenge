@@ -1,6 +1,7 @@
 import { useDetailsScreen } from "@/modules/details/hooks/use-details-screen";
 import { useSaveWordHistory } from "@/modules/details/hooks/use-save-word-history";
 import { useWordDetails } from "@/modules/details/hooks/use-word-details";
+import { useWordNavigation } from "@/modules/details/hooks/use-word-navigation";
 import { act, cleanup, renderHook } from "@testing-library/react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
@@ -17,13 +18,23 @@ jest.mock("@/modules/details/hooks/use-word-details", () => ({
   useWordDetails: jest.fn(),
 }));
 
+jest.mock("@/modules/details/hooks/use-word-navigation", () => ({
+  useWordNavigation: jest.fn(),
+}));
+
 const mockedParams = jest.mocked(useLocalSearchParams);
 const mockedRouter = jest.mocked(useRouter);
 const mockedHistory = jest.mocked(useSaveWordHistory);
 const mockedDetails = jest.mocked(useWordDetails);
+const mockedNavigation = jest.mocked(
+  jest.requireMock("@/modules/details/hooks/use-word-navigation")
+    .useWordNavigation,
+);
 
 const mockBack = jest.fn();
 const mockRetry = jest.fn();
+const mockOnPrevious = jest.fn();
+const mockOnNext = jest.fn();
 
 const createDetails = (
   overrides: Partial<ReturnType<typeof useWordDetails>> = {},
@@ -56,6 +67,12 @@ describe("useDetailsScreen", () => {
     } as unknown as ReturnType<typeof useRouter>);
 
     mockedDetails.mockReturnValue(createDetails());
+    mockedNavigation.mockReturnValue({
+      hasPrevious: true,
+      hasNext: false,
+      onPrevious: mockOnPrevious,
+      onNext: mockOnNext,
+    } satisfies ReturnType<typeof useWordNavigation>);
   });
 
   afterEach(async () => {
@@ -122,5 +139,25 @@ describe("useDetailsScreen", () => {
     const { result } = await renderHook(() => useDetailsScreen());
 
     expect(result.current.audioUrl).toBe("https://example.com/hello.mp3");
+  });
+
+  it("exposes navigation for the current word", async () => {
+    const { result } = await renderHook(() => useDetailsScreen());
+
+    expect(result.current.hasPrevious).toBe(true);
+    expect(result.current.hasNext).toBe(false);
+    expect(result.current.onPrevious).toBe(mockOnPrevious);
+    expect(result.current.onNext).toBe(mockOnNext);
+  });
+
+  it("follows the route when the selected word changes", async () => {
+    const { rerender } = await renderHook(() => useDetailsScreen());
+
+    mockedParams.mockReturnValue({ word: "world" });
+
+    await rerender(undefined);
+
+    expect(mockedHistory).toHaveBeenLastCalledWith("world");
+    expect(mockedDetails).toHaveBeenLastCalledWith("world");
   });
 });

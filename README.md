@@ -83,6 +83,79 @@ A API não possui endpoint com a lista de palavras. Essa lista pode ser carregad
 2. Verifique se o Readme está bom e faça o commit final em seu repositório;
 3. Envie e aguarde as instruções para seguir. Caso o teste tenha apresentação de vídeo, dentro da tela de entrega será possível gravar após adicionar o link do repositório. Sucesso e boa sorte. =)
 
+## Solução implementada
+
+This is a challenge by [Coodesh](https://coodesh.com/).
+
+Aplicativo para consultar palavras em inglês, ver significado e fonética, ouvir a pronúncia quando a API oferece áudio, e guardar favoritos e histórico por usuário.
+
+### Stack
+
+- React Native, Expo e Expo Router
+- TypeScript
+- NativeWind
+- Zustand
+- Supabase Auth e PostgreSQL, via REST
+- Axios
+- TanStack Query v5
+- Jest e React Native Testing Library
+- expo-audio
+
+### Funcionalidades
+
+- Login com e-mail e senha, sessão protegida e logout
+- Lista de palavras em grade de três colunas, com paginação e rolagem infinita
+- Detalhe da palavra, com fonética, classes gramaticais, definições e exemplos
+- Voltar e Próximo dentro da ordem da lista de onde a palavra foi aberta
+- Favoritar e desfavoritar, com a estrela acompanhando a palavra atual
+- Histórico gravado ao abrir uma palavra, com listagem e remoção
+- Estados de carregamento, erro e vazio
+- Pronúncia com play, pause, progresso e nova tentativa quando o áudio não carrega
+
+### Organização
+
+- `src/app`: rotas públicas, grupo autenticado e tela `/words/[word]`
+- `src/modules/authentication`: sessão, login, logout e cache privado
+- `src/modules/home`: lista, histórico e favoritos
+- `src/modules/details`: consulta, apresentação, áudio, favorito da palavra e navegação
+- `src/shared`: componentes e utilitários reutilizados
+
+A rota só compõe a tela. Serviços acessam as APIs, hooks concentram estado e apresentação, e componentes permanecem declarativos.
+
+### Lista de palavras
+
+A Free Dictionary API não entrega a lista. O app lê a tabela `words` do Supabase, em ordem `word.asc`, com paginação. O arquivo `words_dictionary.json` não está neste repositório e não há script de carga. A tabela remota precisa existir e estar preenchida antes de usar a Home.
+
+### Free Dictionary API
+
+O detalhe usa `GET https://api.dictionaryapi.dev/api/v2/entries/en/{word}`. O resultado fica no cache do TanStack Query, na chave `["word-details", word]`. Essa chamada não recebe o token do Supabase. Fonética, áudio, definição e exemplo são opcionais na resposta e só aparecem quando existem.
+
+### Navegação entre palavras
+
+Home, History e Favorites abrem `/words/[word]` com o parâmetro `source`: `word-list`, `history` ou `favorites`. O hook `useWordNavigation` lê as páginas já carregadas dessa lista no cache e mantém a ordem original durante a visita. Voltar e Próximo usam `router.setParams`, então o X continua fechando a tela com `router.back()`.
+
+Sem `source`, ou quando a palavra não está nas páginas carregadas, os dois botões ficam desabilitados. A próxima página não é buscada só para habilitar o botão. Abrir outra palavra grava o histórico, atualiza o favorito e recria o player.
+
+### Pronúncia
+
+O player tenta a URL devolvida pela API. Enquanto carrega, mostra o indicador. Se o `expo-audio` reportar erro, ou se passar 10 segundos sem carregar, o indicador vira retry e a mesma URL é pedida de novo. Trocar de palavra interrompe o áudio anterior. Não há outra API nem outro host de áudio. Arquivos externos podem continuar indisponíveis.
+
+### Diferenciais do desafio
+
+- Player de pronúncia com `expo-audio`
+- Testes de unidade com Jest e React Native Testing Library
+- Login com usuário e senha, com favoritos e histórico associados ao ID no Supabase
+
+Não foi adicionada uma ferramenta de injeção de dependência. Os módulos são compostos por import direto.
+
+### Limitações conhecidas
+
+- O access token não é renovado. Quando expira, a sessão local encerra.
+- Voltar e Próximo só conhecem palavras já carregadas na lista de origem.
+- A disponibilidade do áudio depende do servidor indicado pela Free Dictionary API.
+- A lista inicial depende da tabela `words` no Supabase. Este repositório não versiona o `words_dictionary.json`.
+- O pacote `@supabase/supabase-js` está instalado, mas o login não usa o SDK.
+
 ## Autenticação
 
 O login usa o Supabase Auth pela API REST (`POST /auth/v1/token?grant_type=password`), com Axios, Zustand e `expo-secure-store`. O SDK `@supabase/supabase-js` não faz parte desse fluxo. A chave usada no app é somente a publishable key. A `service_role` não entra no cliente.
@@ -170,7 +243,7 @@ apikey: SUPABASE_PUBLISHABLE_KEY
 
 Antes do envio, ele pede `getValidAccessToken()`. Token ausente ou expirado não é enviado. Não há interceptor de refresh e a requisição não é repetida para tentar renovar o token. Um HTTP 401 do próprio Supabase encerra a sessão.
 
-Favoritos e histórico ainda não existem. A infraestrutura fica pronta para eles: a chave deve ser `authenticatedQueryKey(userId, ...)`, e a chamada deve usar `getAuthenticatedApi()`.
+Favoritos e histórico já usam essa sessão. As consultas privadas ficam em `authenticatedQueryKey(userId, ...)`, com prefixo `user`. Os serviços enviam `Authorization: Bearer` no cliente Supabase compartilhado. `getAuthenticatedApi()` continua disponível, mas não é o cliente chamado por esses fluxos.
 
 ### Cache
 
@@ -204,17 +277,33 @@ As duas variáveis são obrigatórias. Não coloque a secret key no app.
 - Um timer pode ser suspenso com o app em segundo plano. Por isso a expiração também é conferida na abertura, no retorno ao primeiro plano e antes de cada chamada privada.
 - O valor do SecureStore no iOS fica em torno de 2048 bytes. A sessão simplificada cabe nesse limite para um JWT comum. Se a gravação falhar, o login não é concluído.
 - A proteção de rotas no cliente não substitui RLS no Supabase.
+- Voltar e Próximo não atravessam uma página que ainda não foi carregada.
+- O áudio pode falhar mesmo com uma URL válida, porque o arquivo é servido fora deste projeto.
 
 ### Como executar
 
+Node `>=24.15.0` e npm `>=11.12.1`.
+
 ```bash
 npm install
+cp .env.example .env
 npm start
+```
+
+`npm run android`, `npm run ios` e `npm run web` abrem o mesmo projeto nas plataformas correspondentes.
+
+```bash
 npm test
+npm run test:coverage
+npm run test:ci
 npm run typecheck
 ```
 
+`npm run lint` chama `expo lint`. O repositório não inclui configuração nem dependência do ESLint; o comando do Expo tenta instalá-las na primeira execução.
+
 Os testes usam Jest e `@testing-library/react-native`.
+
+O Supabase precisa das tabelas `words`, `word_history` e `favorites`, com RLS alinhado ao usuário autenticado. O app seleciona `word` na lista, `user_id, word, last_viewed_at` no histórico e `user_id, word, created_at` nos favoritos.
 
 ## Suporte
 

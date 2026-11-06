@@ -6,6 +6,7 @@ export type CollectionItem = {
 
 export type CollectionItemProps = {
   word: string;
+  source?: string;
   onRemove?: (word: string) => void;
   isRemoving?: boolean;
   className?: string;

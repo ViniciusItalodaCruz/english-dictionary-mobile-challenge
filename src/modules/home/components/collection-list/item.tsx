@@ -7,6 +7,7 @@ import type { CollectionItemProps } from "./types";
 
 export function Item({
   word,
+  source,
   onRemove,
   isRemoving = false,
   className,
@@ -22,7 +23,7 @@ export function Item({
       <Link
         href={{
           pathname: "/words/[word]",
-          params: { word },
+          params: source ? { word, source } : { word },
         }}
         asChild
       >

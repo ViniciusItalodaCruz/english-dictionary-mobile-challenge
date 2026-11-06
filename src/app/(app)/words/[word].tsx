@@ -1,12 +1,13 @@
 import {
   DetailsContentState,
   DetailsHeader,
+  DetailsNavigation,
   WordAudioPlayer,
   WordCard,
   WordMeanings,
 } from "@/modules/details/components";
 import { useDetailsScreen } from "@/modules/details/hooks";
-import { ScrollView } from "react-native";
+import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WordScreen() {
@@ -23,6 +24,10 @@ export default function WordScreen() {
     showContent,
     retry,
     onClose,
+    hasPrevious,
+    hasNext,
+    onPrevious,
+    onNext,
   } = useDetailsScreen();
 
   return (
@@ -31,7 +36,7 @@ export default function WordScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="gap-6 px-4 pb-8"
+        contentContainerClassName="gap-6 px-4 pb-6"
         showsVerticalScrollIndicator={false}
       >
         <DetailsContentState
@@ -46,12 +51,21 @@ export default function WordScreen() {
           <>
             <WordCard word={word} phonetic={phonetic} />
 
-            <WordAudioPlayer key={audioUrl ?? word} audioUrl={audioUrl} />
+            <WordAudioPlayer key={selectedWord} audioUrl={audioUrl} />
 
             <WordMeanings meanings={meanings} />
           </>
         ) : null}
       </ScrollView>
+
+      <View className="px-4 pb-4 pt-2">
+        <DetailsNavigation
+          hasPrevious={hasPrevious}
+          hasNext={hasNext}
+          onPrevious={onPrevious}
+          onNext={onNext}
+        />
+      </View>
     </SafeAreaView>
   );
 }

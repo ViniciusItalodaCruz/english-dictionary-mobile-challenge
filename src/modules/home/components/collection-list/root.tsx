@@ -35,6 +35,7 @@ export function Root({
     ({ item }) => {
       const itemProps: CollectionItemProps = {
         word: item.word,
+        source: listKey,
         onRemove,
         isRemoving: isRemovingWord?.(item.word) ?? false,
       };
@@ -45,7 +46,7 @@ export function Root({
 
       return <Item {...itemProps} />;
     },
-    [onRemove, isRemovingWord, renderItem],
+    [isRemovingWord, listKey, onRemove, renderItem],
   );
 
   const handleEndReached = useCallback(() => {

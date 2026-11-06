@@ -63,7 +63,12 @@ describe("WordAudioPlayer", () => {
   });
 
   it("renders the pause control when playing", async () => {
-    mockedHook.mockReturnValue(createPlayerState({ isPlaying: true }));
+    mockedHook.mockReturnValue(
+      createPlayerState({
+        isPlaying: true,
+        accessibilityLabel: "Pause pronunciation",
+      }),
+    );
 
     await render(<WordAudioPlayer audioUrl="https://example.com/audio.mp3" />);
 
@@ -87,7 +92,7 @@ describe("WordAudioPlayer", () => {
 
     await render(<WordAudioPlayer audioUrl="https://example.com/audio.mp3" />);
 
-    expect(screen.getByText("Unable to play pronunciation.")).toBeTruthy();
+    expect(screen.getByText("Unable to load pronunciation.")).toBeTruthy();
   });
 
   it("renders nothing without audio", async () => {
@@ -105,6 +110,7 @@ describe("WordAudioPlayer", () => {
       createPlayerState({
         hasError: true,
         retry,
+        accessibilityLabel: "Retry pronunciation",
       }),
     );
 
@@ -118,5 +124,20 @@ describe("WordAudioPlayer", () => {
 
     expect(retry).toHaveBeenCalledTimes(1);
     expect(togglePlayback).not.toHaveBeenCalled();
+  });
+
+  it("exposes the pronunciation progress", async () => {
+    mockedHook.mockReturnValue(createPlayerState({ progress: 0.4 }));
+
+    await render(<WordAudioPlayer audioUrl="https://example.com/audio.mp3" />);
+
+    expect(screen.getByLabelText("Pronunciation progress")).toHaveProp(
+      "accessibilityValue",
+      {
+        min: 0,
+        max: 100,
+        now: 40,
+      },
+    );
   });
 });

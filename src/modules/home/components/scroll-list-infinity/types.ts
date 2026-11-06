@@ -2,6 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 
 export type WordItemProps = Readonly<{
   word: string;
+  source?: string;
   className?: string;
   textClassName?: string;
 }>;

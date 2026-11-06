@@ -4,7 +4,12 @@ import { Text, View } from "react-native";
 
 import type { WordItemProps } from "./types";
 
-export function Item({ word, className, textClassName }: WordItemProps) {
+export function Item({
+  word,
+  source,
+  className,
+  textClassName,
+}: WordItemProps) {
   return (
     <View
       className={cn(
@@ -17,7 +22,7 @@ export function Item({ word, className, textClassName }: WordItemProps) {
       <Link
         href={{
           pathname: "/words/[word]",
-          params: { word },
+          params: source ? { word, source } : { word },
         }}
         asChild
       >

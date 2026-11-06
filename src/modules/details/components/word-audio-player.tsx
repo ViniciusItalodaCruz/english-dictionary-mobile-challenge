@@ -42,6 +42,13 @@ export function WordAudioPlayer({ audioUrl }: Readonly<WordAudioPlayerProps>) {
         </Pressable>
 
         <View
+          accessibilityRole="progressbar"
+          accessibilityLabel="Pronunciation progress"
+          accessibilityValue={{
+            min: 0,
+            max: 100,
+            now: Math.round(progress * 100),
+          }}
           className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-700"
           testID="audio-progress-track"
         >
