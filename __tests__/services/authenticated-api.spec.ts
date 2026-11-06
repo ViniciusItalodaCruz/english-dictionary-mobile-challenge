@@ -6,7 +6,7 @@ import {
   createAuthenticatedApi,
   ExternalCredentialTargetError,
   handleUnauthorized,
-} from "@/modules/authentication/services/authenticated-api";
+} from "@/modules/authentication/services/authenticated-api.service";
 
 const mockGetState = jest.fn();
 const mockRequest = jest.fn();
