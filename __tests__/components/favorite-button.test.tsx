@@ -227,4 +227,138 @@ describe("FavoriteButton", () => {
 
     expect(screen.queryByLabelText("Add hello to favorites")).toBeNull();
   });
+
+  it("shows an error when adding a favorite fails", async () => {
+    const screen = await render(<FavoriteButton word="hello" />);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Add hello to favorites"));
+    });
+
+    mockedUseSaveWordFavorite.mockReturnValue(
+      createSaveState({
+        isError: true,
+        error: new Error("Network error"),
+      }),
+    );
+
+    await screen.rerender(<FavoriteButton word="hello" />);
+
+    expect(screen.getByText("Unable to add word to favorites.")).toBeTruthy();
+
+    expect(screen.getByLabelText("Add hello to favorites")).toBeTruthy();
+
+    expect(addFavorite).toHaveBeenCalledTimes(1);
+    expect(removeFavorite).not.toHaveBeenCalled();
+  });
+
+  it("shows an error when removing a favorite fails", async () => {
+    mockedUseWordFavoriteStatus.mockReturnValue(
+      createStatusState({ isFavorite: true }),
+    );
+
+    const screen = await render(<FavoriteButton word="hello" />);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Remove hello from favorites"));
+    });
+
+    mockedUseDeleteWordFavorite.mockReturnValue(
+      createDeleteState({
+        isError: true,
+        error: new Error("Network error"),
+      }),
+    );
+
+    await screen.rerender(<FavoriteButton word="hello" />);
+
+    expect(
+      screen.getByText("Unable to remove word from favorites."),
+    ).toBeTruthy();
+
+    expect(screen.getByLabelText("Remove hello from favorites")).toBeTruthy();
+
+    expect(removeFavorite).toHaveBeenCalledTimes(1);
+    expect(addFavorite).not.toHaveBeenCalled();
+  });
+
+  it("does not display previous mutation errors before interacting", async () => {
+    mockedUseSaveWordFavorite.mockReturnValue(
+      createSaveState({
+        isError: true,
+        error: new Error("Previous save error"),
+      }),
+    );
+
+    mockedUseDeleteWordFavorite.mockReturnValue(
+      createDeleteState({
+        isError: true,
+        error: new Error("Previous delete error"),
+      }),
+    );
+
+    const screen = await render(<FavoriteButton word="hello" />);
+
+    expect(screen.queryByText("Unable to add word to favorites.")).toBeNull();
+
+    expect(
+      screen.queryByText("Unable to remove word from favorites."),
+    ).toBeNull();
+
+    expect(screen.getByLabelText("Add hello to favorites")).toBeTruthy();
+  });
+
+  it("dismisses the previous error when retrying the action", async () => {
+    const screen = await render(<FavoriteButton word="hello" />);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Add hello to favorites"));
+    });
+
+    mockedUseSaveWordFavorite.mockReturnValue(
+      createSaveState({
+        isError: true,
+        error: new Error("Network error"),
+      }),
+    );
+
+    await screen.rerender(<FavoriteButton word="hello" />);
+
+    expect(screen.getByText("Unable to add word to favorites.")).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Add hello to favorites"));
+    });
+
+    expect(screen.queryByText("Unable to add word to favorites.")).toBeNull();
+
+    expect(addFavorite).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears the previous action error when the word changes", async () => {
+    const screen = await render(<FavoriteButton word="hello" />);
+
+    await act(async () => {
+      fireEvent.press(screen.getByLabelText("Add hello to favorites"));
+    });
+
+    mockedUseSaveWordFavorite.mockReturnValue(
+      createSaveState({
+        isError: true,
+        error: new Error("Network error"),
+      }),
+    );
+
+    await screen.rerender(<FavoriteButton word="hello" />);
+
+    expect(screen.getByText("Unable to add word to favorites.")).toBeTruthy();
+
+    await act(async () => {
+      await screen.rerender(<FavoriteButton word="world" />);
+    });
+
+    expect(screen.queryByText("Unable to add word to favorites.")).toBeNull();
+
+    expect(screen.getByLabelText("Add world to favorites")).toBeTruthy();
+  });
 });
