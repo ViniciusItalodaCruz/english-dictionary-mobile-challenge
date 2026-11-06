@@ -1,10 +1,17 @@
 import { useGetWordDetails } from "@/modules/details/hooks/use-get-word-details";
 import { useWordDetails } from "@/modules/details/hooks/use-word-details";
+import { useWordPronunciation } from "@/modules/details/hooks/use-word-pronunciation";
 import { cleanup, renderHook } from "@testing-library/react-native";
 
 jest.mock("@/modules/details/hooks/use-get-word-details", () => ({
   useGetWordDetails: jest.fn(),
 }));
+
+jest.mock("@/modules/details/hooks/use-word-pronunciation", () => ({
+  useWordPronunciation: jest.fn(),
+}));
+
+const mockedUseWordPronunciation = jest.mocked(useWordPronunciation);
 
 const mockedUseGetWordDetails = jest.mocked(useGetWordDetails);
 
@@ -27,6 +34,10 @@ describe("useWordDetails", () => {
     jest.clearAllMocks();
 
     mockedUseGetWordDetails.mockReturnValue(createQueryResult());
+    mockedUseWordPronunciation.mockReturnValue({
+      audioUrl: null,
+      hasAudio: false,
+    });
   });
 
   afterEach(async () => {
@@ -183,5 +194,41 @@ describe("useWordDetails", () => {
     const { result } = await renderHook(() => useWordDetails("hello"));
 
     expect(result.current.word).toBe("hello");
+  });
+
+  it("passes API entries to the pronunciation hook", async () => {
+    const entries = [
+      {
+        word: "hello",
+        phonetics: [{ audio: "https://example.com/hello.mp3" }],
+      },
+    ];
+
+    mockedUseGetWordDetails.mockReturnValue(
+      createQueryResult({
+        wordDetails: entries,
+      }),
+    );
+
+    await renderHook(() => useWordDetails("hello"));
+
+    expect(mockedUseWordPronunciation).toHaveBeenCalledWith(entries);
+  });
+
+  it("exposes the selected audio URL", async () => {
+    mockedUseWordPronunciation.mockReturnValue({
+      audioUrl: "https://example.com/hello.mp3",
+      hasAudio: true,
+    });
+
+    const { result } = await renderHook(() => useWordDetails("hello"));
+
+    expect(result.current.audioUrl).toBe("https://example.com/hello.mp3");
+  });
+
+  it("handles words without pronunciation audio", async () => {
+    const { result } = await renderHook(() => useWordDetails("hello"));
+
+    expect(result.current.audioUrl).toBeNull();
   });
 });

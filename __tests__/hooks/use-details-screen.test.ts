@@ -41,6 +41,7 @@ const createDetails = (
   isEmpty: false,
   isNotFound: false,
   retry: mockRetry,
+  audioUrl: "https://example.com/hello.mp3",
   ...overrides,
 });
 
@@ -115,5 +116,11 @@ describe("useDetailsScreen", () => {
     const { result } = await renderHook(() => useDetailsScreen());
 
     expect(result.current.retry).toBe(mockRetry);
+  });
+
+  it("exposes the audio URL from word details", async () => {
+    const { result } = await renderHook(() => useDetailsScreen());
+
+    expect(result.current.audioUrl).toBe("https://example.com/hello.mp3");
   });
 });

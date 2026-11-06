@@ -1,6 +1,7 @@
 import {
   DetailsContentState,
   DetailsHeader,
+  WordAudioPlayer,
   WordCard,
   WordMeanings,
 } from "@/modules/details/components";
@@ -13,6 +14,7 @@ export default function WordScreen() {
     selectedWord,
     word,
     phonetic,
+    audioUrl,
     meanings,
     isLoading,
     isError,
@@ -43,6 +45,8 @@ export default function WordScreen() {
         {showContent ? (
           <>
             <WordCard word={word} phonetic={phonetic} />
+
+            <WordAudioPlayer key={audioUrl ?? word} audioUrl={audioUrl} />
 
             <WordMeanings meanings={meanings} />
           </>

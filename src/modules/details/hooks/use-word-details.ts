@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 
 import { useGetWordDetails } from "./use-get-word-details";
+import { useWordPronunciation } from "./use-word-pronunciation";
 
 export function useWordDetails(word: string) {
   const { wordDetails, isLoading, isError, isEmpty, error, retry } =
     useGetWordDetails(word);
+  const { audioUrl } = useWordPronunciation(wordDetails);
 
   const entry = wordDetails[0];
 
@@ -37,5 +39,6 @@ export function useWordDetails(word: string) {
     isEmpty,
     isNotFound,
     retry,
+    audioUrl,
   };
 }
